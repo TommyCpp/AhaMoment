@@ -101,6 +101,7 @@ public class Audio{
 
 * In `TestAudioCopy`, we can use the field in `copy` just as its own field.
 * But we need to specify the `table` attribute in the `@Column` annotation.
+* In order to run the application, the `copy_id` must be include in one **field** in `TestAudioCopy` or its supermapper or secondary table.
 
 # Reference
 https://www.concretepage.com/hibernate/secondarytables_hibernate_annotation
