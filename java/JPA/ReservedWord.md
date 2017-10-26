@@ -14,5 +14,9 @@ When mapping field to column in entity, use `\"...\"` to wrap the reserved word.
 [How to wrap all field?](https://stackoverflow.com/questions/3364835/automatic-reserved-word-escaping-for-hibernate-tables-and-columns)
 
 
+## Related
+It seems that when useing `@Transaction` annotataion on the Test class. It will ignore insert and the update. Only perform select on the **end**
+
+
 # Reference 
 https://stackoverflow.com/questions/2224503/creating-field-with-reserved-word-name-with-jpa
