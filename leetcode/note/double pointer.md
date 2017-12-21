@@ -1,4 +1,6 @@
 ## Double Pointer
+Double Pointer can **get the middle of the LinkedList** because the `fast` move two node every time.
+
 ### Example question
 https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/description/
 
