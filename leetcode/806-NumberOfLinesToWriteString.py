@@ -14,6 +14,8 @@ class Solution:
                 line += 1
                 current = width
             else:
-                current += width
+                current += width # note here!! we do not update line here, so we plus 1 line when return 
                 
-        return [line + 1, current]
+        return [line + 1, current] 
+        # why line shoudl +1?
+        
