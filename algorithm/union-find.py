@@ -5,9 +5,13 @@ class UF:
     if self.data[a - 1] == self.data[b - 1]:
       self.data[a - 1] += self.data[b - 1]
       self.data[b - 1] = a
-    elif self.data[a - 1] < 0 and self.data[b - 1] < 0 and self.data[a - 1] > self.data[b - 1]:
-      self.data[b - 1] += self.data[a - 1]
-      self.data[a - 1] = b
+    elif self.data[a - 1] < 0 and self.data[b - 1] < 0:
+      if self.data[a - 1] > self.data[b - 1]:
+        self.data[b - 1] += self.data[a - 1]
+        self.data[a - 1] = b
+      else:
+        self.data[a - 1] += self.data[b - 1]
+        self.data[b - 1] = a
     s = "|"
     for i in self.data:
       s += str(i)+"   |"
