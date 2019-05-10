@@ -14,7 +14,11 @@ assignees: ''
 3. **Trick**
 
 4. **Answer**
+```
+```
 
 5. **Complexity**
+   Time: `O()`
+   Space: `O()`
 
 6. **Related**
