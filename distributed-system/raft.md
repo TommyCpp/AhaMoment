@@ -36,4 +36,30 @@ Those behavior shall be executed whenever an event triggered:
 1. If `commitIndex` > `lastApplied`, increase `lastApplied` and apply log\[`lastApplied`\] to the state machine. **Repeat** until `commitIndex` == `lastApplied`
 2. If RPC request contains `term` > `currentTerm`(Note that `currentTerm` is for current node), then set `currentTerm` to `term` and convert to follower, reset election timeout
 
-## 
+## Event 1
+> Election timeout
+
+### For leader node
+Not possible, leader's election will never timed out
+
+### For candidate node
+Start election like followers did.
+
+### For follower node
+Convert to candidate,
+Start election:
+1. change `status` to candidate
+2. increment `currentTerm`
+3. set `voteFor` to its index.
+4. Reset election timeout
+5. send `RequestVote` to every other nodes
+
+`RequestVote` will contains:
+1. `term`
+2. `candidateId`
+3. `lastLogIndex`, the index of last log(Note it is not last *commited* log)
+4. `lastLogTerm`, the term of last log(Note it's not last *committed* log)
+
+If recevied `AppendEnties` now, convert to follower, discard all the response.
+If get more than half node to grant the vote, then conver to leader
+
