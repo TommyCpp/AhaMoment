@@ -107,3 +107,7 @@ Append entry (must execute following even decided to return false):
 Change commit index:
 - if `leaderCommit` > `commitIndex` of node, then set `commitIndex` = `min(leaderCommit, index of last new entry)`
 
+### For candidate node
+Convert to follower(even it has larger term).
+
+
