@@ -63,3 +63,47 @@ Start election:
 If recevied `AppendEnties` now, convert to follower, discard all the response.
 If get more than half node to grant the vote, then conver to leader
 
+## Event 2
+> Heartbeat timeout
+
+### For leader node
+Broadcast `AppendEntry` request
+
+`AppendEntry` request contains:
+1. `term`
+2. `leaderId`
+3. `prevLogId`
+4. `prevLogTerm`
+5. `entries[]`, list of logs that client need to replica
+6. `leaderCommit`, commit index of leader
+
+`AppendEntry` response should contains:
+1. `term`, the term of target
+2. `sueecss`, true if the target contains log with id = `prevLogId` and term = `prevLogTerm`
+
+
+## Event 3
+> Request vote request recevied
+
+### For follower node
+1. If the node's `term` > request's `term`, return false.
+2. If the node haven't vote for this term, grant vote, return true
+
+### For leader and candidate node
+Based on the term to decide.
+
+## Event 4
+> Append entries received
+
+### For follower node
+Decide what to return 
+1. If the node's `term` > request's `term`, return false.
+2. If the node does not contain such a log that id = `prevLogId` and term  = `prevLogTerm`
+
+Append entry (must execute following even decided to return false):
+1. check if there are existing log that with same index as any log in request. If does have, then **delete the existing log in node and any log following it**.
+2. Append new log
+
+Change commit index:
+- if `leaderCommit` > `commitIndex` of node, then set `commitIndex` = `min(leaderCommit, index of last new entry)`
+
