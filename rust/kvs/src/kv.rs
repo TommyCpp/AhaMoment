@@ -1,27 +1,25 @@
 use std::collections::{HashMap, BTreeMap};
 use crate::{Result, Error};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fs as fs, io};
 use std::fs::{File, OpenOptions};
 use serde::{Serialize, Deserialize};
 use std::io::{Write, Read, LineWriter, BufReader, SeekFrom, BufRead, Seek, BufWriter};
 use std::ops::Add;
+use serde_json::Deserializer;
 
 pub struct KvStore {
-    data_map: BTreeMap<String, CommandLog>,
-    file_readers: HashMap<u32, BufReaderWithPos>,
-    log: String, //log file path
+    data_map: BTreeMap<String, CommandOps>,
+    file_readers: HashMap<u64, BufReaderWithPos>,
+    log: PathBuf,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
-enum Log {
+enum CommandLog {
     Set {
         key: String,
         value: String,
-    },
-    Get {
-        key: String
     },
     Remove {
         key: String
@@ -31,12 +29,16 @@ enum Log {
 
 impl KvStore {
     pub fn open(path: &Path) -> Result<KvStore> {
-        let log_file = path.join("log.txt");
-        let log_file_str = log_file.to_str().unwrap();
+        let logs = KvStore::get_log_files_sorted(path)?;
+        let mut readers_map = HashMap::<u64, BufReaderWithPos>::new();
+        for log_file_name in logs {
+            let reader = BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(log_file_name, path))?)?;
+            readers_map.insert(log_file_name, reader);
+        }
         let mut store = KvStore {
             data_map: BTreeMap::new(),
-            file_readers: HashMap::new(),
-            log: String::from(log_file_str),
+            file_readers: readers_map,
+            log: path.to_path_buf(),
         };
         store.read_log()?;
         Ok(store)
@@ -59,7 +61,7 @@ impl KvStore {
     pub fn remove(&mut self, key: String) -> Result<()> {
         match self.data_map.remove(&key) {
             Some(val) => {
-                self.append_log(Log::Remove { key });
+                self.append_log(CommandLog::Remove { key });
                 Ok(())
             }
             None => {
@@ -68,7 +70,7 @@ impl KvStore {
         }
     }
 
-    fn append_log(&mut self, log: Log) -> Result<()> {
+    fn append_log(&mut self, log: CommandLog) -> Result<()> {
         let mut serialized = serde_json::to_string(&log).unwrap();
         serialized = serialized.add("\n");
         let mut file = self.open_file(false)?;
@@ -79,29 +81,47 @@ impl KvStore {
     }
 
     fn read_log(&mut self) -> Result<()> {
-//        let mut file = self.open_file(true)?;
-//        let mut s = String::new();
-//        match file.read_to_string(&mut s) {
-//            Ok(us) => {
-//                let mut lines: Vec<&str> = s.split('\n').collect();
-//                for line in lines {
-//                    if line.len() != 0 {
-//                        let log: Log = serde_json::from_str(line).unwrap();
-//                        match log {
-//                            Log::Set { key, value } => {
-//                                self.data_map.insert(key, value);
-//                            }
-//                            Log::Remove { key } => {
-//                                self.data_map.remove(&key);
-//                            }
-//                            Log::Get { key } => {}
-//                        }
-//                    }
-//                }
-//            }
-//            Err(why) => panic!("Cannot read file, {}", why)
-//        }
+        let mut keys: Vec<u64> = self.file_readers.keys().map(|&k| k).collect();
+        keys.sort_unstable();
+        for log_file_id in keys {
+            let reader = self.file_readers.get_mut(&log_file_id).unwrap();
+            let mut pos = reader.seek(SeekFrom::Start(0))?;
+            let mut stream = Deserializer::from_reader(reader).into_iter::<CommandLog>();
+            while let Some(command) = stream.next() {
+                let new_pos = stream.byte_offset() as u64;
+                match command? {
+                    CommandLog::Set {
+                        key, value
+                    } => {
+                        self.data_map.insert(key, CommandOps {
+                            pos,
+                            len: new_pos - pos,
+                            file_id: log_file_id,
+                        })
+                    }
+                    CommandLog::Remove { key } => {
+                        self.data_map.remove(key.as_str())
+                    }
+                };
+                pos = new_pos
+            }
+        }
         Ok(())
+    }
+
+
+    fn get_log_files_sorted(path: &Path) -> Result<Vec<u64>> {
+        let mut logs: Vec<u64> = fs::read_dir(path)?
+            .flat_map(|res| -> Result<_> { Ok(res?.path()) })
+            .filter(|path| { path.is_file() && path.extension().unwrap() == "log" })
+            .map(|path| {
+                let filename = path.file_name().unwrap().to_str().unwrap();
+                String::from(filename).trim_end_matches(".log").parse::<u64>()
+            })
+            .flatten()
+            .collect();
+        logs.sort_unstable();
+        Ok(logs)
     }
 
     fn open_file(&mut self, is_read: bool) -> Result<File> {
@@ -118,8 +138,13 @@ impl KvStore {
     }
 }
 
+fn get_file_name_from_log_id(id: u64, base: &Path) -> PathBuf {
+    base.join(format!("{}.log", id))
+}
+
+
 #[derive(Copy, Clone)]
-struct CommandLog {
+struct CommandOps {
     file_id: u64,
     pos: u64,
     len: u64,
