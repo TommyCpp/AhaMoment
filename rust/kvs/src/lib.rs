@@ -11,6 +11,7 @@ pub enum Error {
     NotFoundError,
     IoError(io::Error),
     SerdeError(serde_json::error::Error),
+    InternalError(String),
 }
 
 impl std::convert::From<std::io::Error> for Error {

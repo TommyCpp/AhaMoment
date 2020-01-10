@@ -8,10 +8,14 @@ use std::io::{Write, Read, LineWriter, BufReader, SeekFrom, BufRead, Seek, BufWr
 use std::ops::Add;
 use serde_json::Deserializer;
 
+const LOG_SIZE: u64 = 128;
+
 pub struct KvStore {
     data_map: BTreeMap<String, CommandOps>,
     file_readers: HashMap<u64, BufReaderWithPos>,
-    log: PathBuf,
+    file_writer: BufWriterWithPos,
+    current_active_log: u64,
+    log_dir: PathBuf,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,60 +33,106 @@ enum CommandLog {
 
 impl KvStore {
     pub fn open(path: &Path) -> Result<KvStore> {
-        let logs = KvStore::get_log_files_sorted(path)?;
+        let log_file_names = KvStore::get_log_files_sorted(path)?;
         let mut readers_map = HashMap::<u64, BufReaderWithPos>::new();
-        for log_file_name in logs {
+        let active_file_name: u64 = log_file_names.last().unwrap() + 1;
+        for log_file_name in log_file_names {
             let reader = BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(log_file_name, path))?)?;
             readers_map.insert(log_file_name, reader);
         }
+        //create new log file
+        let active_file = File::create(get_file_name_from_log_id(active_file_name, path))?;
         let mut store = KvStore {
             data_map: BTreeMap::new(),
             file_readers: readers_map,
-            log: path.to_path_buf(),
+            file_writer: BufWriterWithPos::new(active_file)?,
+            current_active_log: active_file_name,
+            log_dir: path.to_path_buf(),
         };
+
         store.read_log()?;
         Ok(store)
     }
 
     pub fn get(&mut self, key: String) -> Result<Option<String>> {
         match self.data_map.get(&key) {
-            Some(val_ref) => Ok(None),
+            Some(&command_ops) => {
+                let mut value = Vec::<u8>::new();
+                let mut reader = self.file_readers.get_mut(&command_ops.file_id).unwrap();
+                reader.seek(SeekFrom::Start(command_ops.pos));
+                let chunk = reader.take(command_ops.len);
+                let command: CommandLog = serde_json::from_reader(chunk)?;
+                match command {
+                    CommandLog::Set { key, value } => {
+                        Ok(Some(value))
+                    }
+                    _ => { Err(Error::InternalError(String::from("The log should not be remove command log"))) }
+                }
+            }
             None => Ok(None),
         }
     }
 
     pub fn set(&mut self, key: String, value: String) -> Result<()> {
-//        let (key_cp, value_cp) = (key.clone(), value.clone());
-//        let _ = self.data_map.insert(key, value); //ignore the return value
-//        self.append_log(Log::Set { key: key_cp, value: value_cp });
+        let command_log = CommandLog::Set {
+            key: key.clone(),
+            value,
+        };
+        let mut serialized = serde_json::to_string(&command_log).unwrap();
+        let old_len = self.file_writer.pos;
+        let len = self.file_writer.write(serialized.as_bytes())?;
+        let command_ops = CommandOps {
+            file_id: self.current_active_log,
+            pos: old_len,
+            len: self.file_writer.pos - old_len,
+        };
+        self.data_map.insert(key, command_ops);
+        if len as u64 > LOG_SIZE {
+            self.swap_active_file()?
+        }
         Ok(())
     }
 
     pub fn remove(&mut self, key: String) -> Result<()> {
-        match self.data_map.remove(&key) {
-            Some(val) => {
-                self.append_log(CommandLog::Remove { key });
-                Ok(())
-            }
-            None => {
-                Err(Error::NotFoundError)
-            }
+        let command_log = CommandLog::Remove {
+            key: key.clone(),
+        };
+        let mut serialized = serde_json::to_string(&command_log).unwrap();
+        let old_len = self.file_writer.pos;
+        let len = self.file_writer.write(serialized.as_bytes())?;
+        let command_ops = CommandOps {
+            file_id: self.current_active_log,
+            pos: old_len,
+            len: self.file_writer.pos - old_len,
+        };
+        self.data_map.remove(key.as_str());
+        if len as u64 > LOG_SIZE {
+            self.swap_active_file()?
         }
+        Ok(())
     }
 
-    fn append_log(&mut self, log: CommandLog) -> Result<()> {
-        let mut serialized = serde_json::to_string(&log).unwrap();
-        serialized = serialized.add("\n");
-        let mut file = self.open_file(false)?;
-        match file.write_all(serialized.as_bytes()) {
-            Ok(()) => Ok(()),
-            Err(why) => panic!("Cannot write file, {}", why)
-        }
+
+    fn sorted_file_keys(&self) -> Result<Vec<u64>> {
+        let mut keys: Vec<u64> = self.file_readers.keys().map(|&k| k).collect();
+        keys.sort_unstable();
+        Ok(keys)
+    }
+
+    fn swap_active_file(&mut self) -> Result<()> {
+        let keys: Vec<u64> = self.sorted_file_keys()?;
+        let current_active_file_id = keys.last().unwrap() + 1;
+        self.file_writer.writer.flush();
+        let new_active_file_id = current_active_file_id + 1;
+        let new_active_file = File::create(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?;
+        self.file_writer = BufWriterWithPos::new(new_active_file)?;
+        let current_active_file = File::open(get_file_name_from_log_id(current_active_file_id, self.log_dir.as_path()))?;
+        self.file_readers.insert(current_active_file_id, BufReaderWithPos::new(current_active_file)?);
+        Ok(())
     }
 
     fn read_log(&mut self) -> Result<()> {
-        let mut keys: Vec<u64> = self.file_readers.keys().map(|&k| k).collect();
-        keys.sort_unstable();
+        let mut keys = self.sorted_file_keys()?;
         for log_file_id in keys {
             let reader = self.file_readers.get_mut(&log_file_id).unwrap();
             let mut pos = reader.seek(SeekFrom::Start(0))?;
@@ -124,18 +174,6 @@ impl KvStore {
         Ok(logs)
     }
 
-    fn open_file(&mut self, is_read: bool) -> Result<File> {
-        let mut file = OpenOptions::new()
-            .append(true)
-            .open(self.log.clone());
-        if is_read {
-            file = File::open(self.log.clone());
-        }
-        match file {
-            Err(why) => panic!("could not open file, {}", why),
-            Ok(file) => Ok(file)
-        }
-    }
 }
 
 fn get_file_name_from_log_id(id: u64, base: &Path) -> PathBuf {
