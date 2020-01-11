@@ -7,6 +7,7 @@ use serde::{Serialize, Deserialize};
 use std::io::{Write, Read, LineWriter, BufReader, SeekFrom, BufRead, Seek, BufWriter};
 use std::ops::Add;
 use serde_json::Deserializer;
+use crate::Error::NotFoundError;
 
 const LOG_SIZE: u64 = 128;
 
@@ -35,7 +36,7 @@ impl KvStore {
     pub fn open(path: &Path) -> Result<KvStore> {
         let log_file_names = KvStore::get_log_files_sorted(path)?;
         let mut readers_map = HashMap::<u64, BufReaderWithPos>::new();
-        let active_file_name: u64 = log_file_names.last().unwrap() + 1;
+        let active_file_name: u64 = log_file_names.last().unwrap_or(&0) + 1;
         for log_file_name in log_file_names {
             let reader = BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(log_file_name, path))?)?;
             readers_map.insert(log_file_name, reader);
@@ -58,9 +59,22 @@ impl KvStore {
         match self.data_map.get(&key) {
             Some(&command_ops) => {
                 let mut value = Vec::<u8>::new();
-                let mut reader = self.file_readers.get_mut(&command_ops.file_id).unwrap();
-                reader.seek(SeekFrom::Start(command_ops.pos));
-                let chunk = reader.take(command_ops.len);
+                let mut active_file_reader: BufReaderWithPos;
+                let mut reader_ref: &mut BufReaderWithPos;
+                if command_ops.file_id == self.current_active_log {
+                    //if the log is in current active log
+                    active_file_reader = BufReaderWithPos::new(
+                        OpenOptions::new()
+                            .read(true)
+                            .open(
+                                get_file_name_from_log_id(self.current_active_log, self.log_dir.as_path())
+                            )?)?;
+                    reader_ref = &mut active_file_reader;
+                }else {
+                    reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
+                }
+                reader_ref.seek(SeekFrom::Start(command_ops.pos));
+                let chunk = reader_ref.take(command_ops.len);
                 let command: CommandLog = serde_json::from_reader(chunk)?;
                 match command {
                     CommandLog::Set { key, value } => {
@@ -81,6 +95,7 @@ impl KvStore {
         let mut serialized = serde_json::to_string(&command_log).unwrap();
         let old_len = self.file_writer.pos;
         let len = self.file_writer.write(serialized.as_bytes())?;
+        self.file_writer.flush();
         let command_ops = CommandOps {
             file_id: self.current_active_log,
             pos: old_len,
@@ -94,22 +109,27 @@ impl KvStore {
     }
 
     pub fn remove(&mut self, key: String) -> Result<()> {
-        let command_log = CommandLog::Remove {
-            key: key.clone(),
-        };
-        let mut serialized = serde_json::to_string(&command_log).unwrap();
-        let old_len = self.file_writer.pos;
-        let len = self.file_writer.write(serialized.as_bytes())?;
-        let command_ops = CommandOps {
-            file_id: self.current_active_log,
-            pos: old_len,
-            len: self.file_writer.pos - old_len,
-        };
-        self.data_map.remove(key.as_str());
-        if len as u64 > LOG_SIZE {
-            self.swap_active_file()?
+        if !self.data_map.contains_key(&key) {
+            Err(NotFoundError)
+        } else {
+            let command_log = CommandLog::Remove {
+                key: key.clone(),
+            };
+            let mut serialized = serde_json::to_string(&command_log).unwrap();
+            let old_len = self.file_writer.pos;
+            let len = self.file_writer.write(serialized.as_bytes())?;
+            self.file_writer.flush();
+            let command_ops = CommandOps {
+                file_id: self.current_active_log,
+                pos: old_len,
+                len: self.file_writer.pos - old_len,
+            };
+            self.data_map.remove(key.as_str());
+            if len as u64 > LOG_SIZE {
+                self.swap_active_file()?
+            }
+            Ok(())
         }
-        Ok(())
     }
 
 
@@ -173,7 +193,6 @@ impl KvStore {
         logs.sort_unstable();
         Ok(logs)
     }
-
 }
 
 fn get_file_name_from_log_id(id: u64, base: &Path) -> PathBuf {
