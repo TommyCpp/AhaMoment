@@ -8,6 +8,7 @@ use walkdir::WalkDir;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::fs;
 
 // `kvs` with no args should exit with a non-zero code.
 #[test]

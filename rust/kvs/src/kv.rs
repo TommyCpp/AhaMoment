@@ -9,7 +9,7 @@ use std::ops::Add;
 use serde_json::Deserializer;
 use crate::Error::NotFoundError;
 
-const LOG_SIZE: u64 = 128;
+const LOG_SIZE: u64 = 80000;
 
 pub struct KvStore {
     data_map: BTreeMap<String, CommandOps>,
@@ -17,6 +17,7 @@ pub struct KvStore {
     file_writer: BufWriterWithPos,
     current_active_log: u64,
     log_dir: PathBuf,
+    log_size: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,18 +38,24 @@ impl KvStore {
         let log_file_names = KvStore::get_log_files_sorted(path)?;
         let mut readers_map = HashMap::<u64, BufReaderWithPos>::new();
         let active_file_name: u64 = log_file_names.last().unwrap_or(&0) + 1;
+        let mut old_log_size = 0 as u64;
         for log_file_name in log_file_names {
-            let reader = BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(log_file_name, path))?)?;
+            let file = fs::File::open(get_file_name_from_log_id(log_file_name, path))?;
+            old_log_size += file.metadata().unwrap().len();
+            let reader = BufReaderWithPos::new(file)?;
+
             readers_map.insert(log_file_name, reader);
         }
         //create new log file
         let active_file = File::create(get_file_name_from_log_id(active_file_name, path))?;
+        readers_map.insert(active_file_name, BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(active_file_name, path))?)?);
         let mut store = KvStore {
             data_map: BTreeMap::new(),
             file_readers: readers_map,
             file_writer: BufWriterWithPos::new(active_file)?,
             current_active_log: active_file_name,
             log_dir: path.to_path_buf(),
+            log_size: old_log_size,
         };
 
         store.read_log()?;
@@ -59,20 +66,8 @@ impl KvStore {
         match self.data_map.get(&key) {
             Some(&command_ops) => {
                 let mut value = Vec::<u8>::new();
-                let mut active_file_reader: BufReaderWithPos;
                 let mut reader_ref: &mut BufReaderWithPos;
-                if command_ops.file_id == self.current_active_log {
-                    //if the log is in current active log
-                    active_file_reader = BufReaderWithPos::new(
-                        OpenOptions::new()
-                            .read(true)
-                            .open(
-                                get_file_name_from_log_id(self.current_active_log, self.log_dir.as_path())
-                            )?)?;
-                    reader_ref = &mut active_file_reader;
-                }else {
-                    reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
-                }
+                reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
                 reader_ref.seek(SeekFrom::Start(command_ops.pos));
                 let chunk = reader_ref.take(command_ops.len);
                 let command: CommandLog = serde_json::from_reader(chunk)?;
@@ -96,14 +91,15 @@ impl KvStore {
         let old_len = self.file_writer.pos;
         let len = self.file_writer.write(serialized.as_bytes())?;
         self.file_writer.flush();
+        self.log_size += len as u64;
         let command_ops = CommandOps {
             file_id: self.current_active_log,
             pos: old_len,
             len: self.file_writer.pos - old_len,
         };
         self.data_map.insert(key, command_ops);
-        if len as u64 > LOG_SIZE {
-            self.swap_active_file()?
+        if self.log_size > LOG_SIZE {
+            self.compaction()?
         }
         Ok(())
     }
@@ -119,14 +115,15 @@ impl KvStore {
             let old_len = self.file_writer.pos;
             let len = self.file_writer.write(serialized.as_bytes())?;
             self.file_writer.flush();
+            self.log_size += len as u64;
             let command_ops = CommandOps {
                 file_id: self.current_active_log,
                 pos: old_len,
                 len: self.file_writer.pos - old_len,
             };
             self.data_map.remove(key.as_str());
-            if len as u64 > LOG_SIZE {
-                self.swap_active_file()?
+            if self.log_size > LOG_SIZE {
+                self.compaction()?
             }
             Ok(())
         }
@@ -139,15 +136,64 @@ impl KvStore {
         Ok(keys)
     }
 
-    fn swap_active_file(&mut self) -> Result<()> {
-        let keys: Vec<u64> = self.sorted_file_keys()?;
-        let current_active_file_id = keys.last().unwrap() + 1;
+    fn compaction(&mut self) -> Result<()> {
         self.file_writer.writer.flush();
-        let new_active_file_id = current_active_file_id + 1;
-        let new_active_file = File::create(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?;
-        self.file_writer = BufWriterWithPos::new(new_active_file)?;
-        let current_active_file = File::open(get_file_name_from_log_id(current_active_file_id, self.log_dir.as_path()))?;
-        self.file_readers.insert(current_active_file_id, BufReaderWithPos::new(current_active_file)?);
+        //Creating new file
+        let new_active_file_id = self.current_active_log + 1;
+        self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?;
+        self.current_active_log = new_active_file_id;
+
+
+        //Copy active log to new file
+        let mut new_data_map = BTreeMap::new();
+        let mut pos = self.file_writer.pos;
+        for (key, command_ops) in self.data_map.iter() {
+            let mut log = vec![0; command_ops.len as usize];
+            let mut reader_ref: &mut BufReaderWithPos;
+            reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
+            reader_ref.seek(SeekFrom::Start(command_ops.pos));
+            let mut chunk = reader_ref.take(command_ops.len);
+            chunk.read(log.as_mut_slice());
+
+            let len = self.file_writer.write(log.as_slice())?;
+            new_data_map.insert(key.clone(), CommandOps {
+                file_id: self.current_active_log,
+                pos,
+                len: len as u64,
+            });
+
+            pos += len as u64;
+        }
+        self.file_writer.flush();
+
+
+        //gather old file names
+        let old_files = self.sorted_file_keys()?;
+
+        //clean readers, close all reader of old files
+        self.file_readers.clear();
+        self.file_readers.insert(new_active_file_id, BufReaderWithPos::new(File::open(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?);
+
+        //delete old files
+        for file_id in old_files {
+            let path = get_file_name_from_log_id(file_id, self.log_dir.as_path());
+            fs::remove_file(path)?;
+        }
+
+
+        //replace data map
+        self.data_map = new_data_map;
+
+        //create new log file
+        self.file_writer.writer.flush();
+        //Creating new file
+        let new_active_file_id = self.current_active_log + 1;
+        self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?;
+        self.file_readers.insert(new_active_file_id, BufReaderWithPos::new(File::open(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?);
+        self.current_active_log = new_active_file_id;
+
+        //reset log size
+        self.log_size = self.file_writer.pos;
         Ok(())
     }
 
