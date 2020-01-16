@@ -1,6 +1,7 @@
-use criterion::{black_box, criterion_group, criterion_main, Benchmark, Criterion};
+use criterion::{criterion_group, criterion_main, Benchmark, Criterion};
 use kvs::KvStore;
 use tempfile::TempDir;
+use kvs::KvsEngine;
 
 const RUN_TIMES: i32 = 2000;
 const KEY_NUM: i32 = 1000;

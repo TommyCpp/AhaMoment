@@ -1,4 +1,5 @@
 use std::{fs, io};
+use crate::common::KvsEngine;
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
@@ -62,70 +63,6 @@ impl KvStore {
 
         store.read_log()?;
         Ok(store)
-    }
-
-    pub fn get(&mut self, key: String) -> Result<Option<String>> {
-        match self.data_map.get(&key) {
-            Some(&command_ops) => {
-                let reader_ref: &mut BufReaderWithPos;
-                reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
-                reader_ref.seek(SeekFrom::Start(command_ops.pos));
-                let chunk = reader_ref.take(command_ops.len);
-                let command: CommandLog = serde_json::from_reader(chunk)?;
-                match command {
-                    CommandLog::Set { key: _, value } => Ok(Some(value)),
-                    _ => Err(Error::InternalError(String::from(
-                        "The log should not be remove command log",
-                    ))),
-                }
-            }
-            None => Ok(None),
-        }
-    }
-
-    pub fn set(&mut self, key: String, value: String) -> Result<()> {
-        let command_log = CommandLog::Set {
-            key: key.clone(),
-            value,
-        };
-        let mut serialized = serde_json::to_string(&command_log).unwrap();
-        let old_len = self.file_writer.pos;
-        let len = self.file_writer.write(serialized.as_bytes())?;
-        self.file_writer.flush();
-        self.log_size += len as u64;
-        let command_ops = CommandOps {
-            file_id: self.current_active_log,
-            pos: old_len,
-            len: self.file_writer.pos - old_len,
-        };
-        self.data_map.insert(key, command_ops);
-        if self.log_size > LOG_SIZE {
-            self.compaction()?
-        }
-        Ok(())
-    }
-
-    pub fn remove(&mut self, key: String) -> Result<()> {
-        if !self.data_map.contains_key(&key) {
-            Err(NotFoundError)
-        } else {
-            let command_log = CommandLog::Remove { key: key.clone() };
-            let mut serialized = serde_json::to_string(&command_log).unwrap();
-            let old_len = self.file_writer.pos;
-            let len = self.file_writer.write(serialized.as_bytes())?;
-            self.file_writer.flush();
-            self.log_size += len as u64;
-            let _command_ops = CommandOps {
-                file_id: self.current_active_log,
-                pos: old_len,
-                len: self.file_writer.pos - old_len,
-            };
-            self.data_map.remove(key.as_str());
-            if self.log_size > LOG_SIZE {
-                self.compaction()?
-            }
-            Ok(())
-        }
     }
 
     fn sorted_file_keys(&self) -> Result<Vec<u64>> {
@@ -252,6 +189,72 @@ impl KvStore {
             .collect();
         logs.sort_unstable();
         Ok(logs)
+    }
+}
+
+impl KvsEngine for KvStore {
+    fn set(&mut self, key: String, value: String) -> Result<()> {
+        let command_log = CommandLog::Set {
+            key: key.clone(),
+            value,
+        };
+        let mut serialized = serde_json::to_string(&command_log).unwrap();
+        let old_len = self.file_writer.pos;
+        let len = self.file_writer.write(serialized.as_bytes())?;
+        self.file_writer.flush();
+        self.log_size += len as u64;
+        let command_ops = CommandOps {
+            file_id: self.current_active_log,
+            pos: old_len,
+            len: self.file_writer.pos - old_len,
+        };
+        self.data_map.insert(key, command_ops);
+        if self.log_size > LOG_SIZE {
+            self.compaction()?
+        }
+        Ok(())
+    }
+
+    fn get(&mut self, key: String) -> Result<Option<String>> {
+        match self.data_map.get(&key) {
+            Some(&command_ops) => {
+                let reader_ref: &mut BufReaderWithPos;
+                reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
+                reader_ref.seek(SeekFrom::Start(command_ops.pos));
+                let chunk = reader_ref.take(command_ops.len);
+                let command: CommandLog = serde_json::from_reader(chunk)?;
+                match command {
+                    CommandLog::Set { key: _, value } => Ok(Some(value)),
+                    _ => Err(Error::InternalError(String::from(
+                        "The log should not be remove command log",
+                    ))),
+                }
+            }
+            None => Ok(None),
+        }
+    }
+
+    fn remove(&mut self, key: String) -> Result<()> {
+        if !self.data_map.contains_key(&key) {
+            Err(NotFoundError)
+        } else {
+            let command_log = CommandLog::Remove { key: key.clone() };
+            let mut serialized = serde_json::to_string(&command_log).unwrap();
+            let old_len = self.file_writer.pos;
+            let len = self.file_writer.write(serialized.as_bytes())?;
+            self.file_writer.flush();
+            self.log_size += len as u64;
+            let _command_ops = CommandOps {
+                file_id: self.current_active_log,
+                pos: old_len,
+                len: self.file_writer.pos - old_len,
+            };
+            self.data_map.remove(key.as_str());
+            if self.log_size > LOG_SIZE {
+                self.compaction()?
+            }
+            Ok(())
+        }
     }
 }
 

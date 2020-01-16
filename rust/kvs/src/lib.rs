@@ -1,27 +1,10 @@
-use crate::Error::{IoError, SerdeError};
 pub use kv::KvStore;
 use std::io;
+pub use crate::error::Error;
+pub use common::KvsEngine;
 
 mod kv;
+mod error;
+mod common;
 
 pub type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Debug)]
-pub enum Error {
-    NotFoundError,
-    IoError(io::Error),
-    SerdeError(serde_json::error::Error),
-    InternalError(String),
-}
-
-impl std::convert::From<std::io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        IoError(err)
-    }
-}
-
-impl std::convert::From<serde_json::error::Error> for Error {
-    fn from(err: serde_json::error::Error) -> Self {
-        SerdeError(err)
-    }
-}

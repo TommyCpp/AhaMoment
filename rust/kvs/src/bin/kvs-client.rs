@@ -6,10 +6,11 @@ use std::process::exit;
 use clap::{App, Arg, SubCommand};
 
 use kvs::Result;
+use kvs::KvsEngine;
 
 fn main() -> Result<()> {
     let mut kvs = kvs::KvStore::open(current_dir()?.as_path()).unwrap();
-    let matches = App::new("kvs")
+    let matches = App::new("kvs-client")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .subcommand(SubCommand::with_name("get").arg(Arg::with_name("key").required(true).index(1)))
