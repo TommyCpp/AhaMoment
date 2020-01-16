@@ -1,13 +1,11 @@
 extern crate clap;
 
+use std::env::current_dir;
 use std::process::exit;
 
 use clap::{App, Arg, SubCommand};
+
 use kvs::Result;
-use std::path::Path;
-use std::ops::Add;
-use std::fs::File;
-use std::env::current_dir;
 
 fn main() -> Result<()> {
     let mut kvs = kvs::KvStore::open(current_dir()?.as_path()).unwrap();
@@ -42,15 +40,15 @@ fn main() -> Result<()> {
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("key").unwrap();
-            match kvs.remove(String::from(key)) {
+            match    kvs.remove(String::from(key)) {
                 Err(err) => match err {
                     kvs::Error::NotFoundError => {
                         println!("Key not found");
                         exit(1)
                     }
-                    _ => panic!("Other error")
-                }
-                Ok(_) => ()
+                    _ => panic!("Other error"),
+                },
+                Ok(_) => (),
             };
         }
         _ => exit(1),

@@ -1,15 +1,17 @@
-use std::collections::{HashMap, BTreeMap};
-use crate::{Result, Error};
+use std::{fs, io};
+use std::collections::{BTreeMap, HashMap};
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
-use std::{fs as fs, io};
-use std::fs::{File, OpenOptions};
-use serde::{Serialize, Deserialize};
-use std::io::{Write, Read, LineWriter, BufReader, SeekFrom, BufRead, Seek, BufWriter};
-use std::ops::Add;
+
+use serde::{Deserialize, Serialize};
 use serde_json::Deserializer;
+
+use crate::{Error, Result};
 use crate::Error::NotFoundError;
 
-const LOG_SIZE: u64 = 80000;
+const LOG_SIZE: u64 = 1024 * 10; //byte
+
 
 pub struct KvStore {
     data_map: BTreeMap<String, CommandOps>,
@@ -23,15 +25,9 @@ pub struct KvStore {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 enum CommandLog {
-    Set {
-        key: String,
-        value: String,
-    },
-    Remove {
-        key: String
-    },
+    Set { key: String, value: String },
+    Remove { key: String },
 }
-
 
 impl KvStore {
     pub fn open(path: &Path) -> Result<KvStore> {
@@ -48,7 +44,13 @@ impl KvStore {
         }
         //create new log file
         let active_file = File::create(get_file_name_from_log_id(active_file_name, path))?;
-        readers_map.insert(active_file_name, BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(active_file_name, path))?)?);
+        readers_map.insert(
+            active_file_name,
+            BufReaderWithPos::new(fs::File::open(get_file_name_from_log_id(
+                active_file_name,
+                path,
+            ))?)?,
+        );
         let mut store = KvStore {
             data_map: BTreeMap::new(),
             file_readers: readers_map,
@@ -65,17 +67,16 @@ impl KvStore {
     pub fn get(&mut self, key: String) -> Result<Option<String>> {
         match self.data_map.get(&key) {
             Some(&command_ops) => {
-                let mut value = Vec::<u8>::new();
-                let mut reader_ref: &mut BufReaderWithPos;
+                let reader_ref: &mut BufReaderWithPos;
                 reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
                 reader_ref.seek(SeekFrom::Start(command_ops.pos));
                 let chunk = reader_ref.take(command_ops.len);
                 let command: CommandLog = serde_json::from_reader(chunk)?;
                 match command {
-                    CommandLog::Set { key, value } => {
-                        Ok(Some(value))
-                    }
-                    _ => { Err(Error::InternalError(String::from("The log should not be remove command log"))) }
+                    CommandLog::Set { key: _, value } => Ok(Some(value)),
+                    _ => Err(Error::InternalError(String::from(
+                        "The log should not be remove command log",
+                    ))),
                 }
             }
             None => Ok(None),
@@ -108,15 +109,13 @@ impl KvStore {
         if !self.data_map.contains_key(&key) {
             Err(NotFoundError)
         } else {
-            let command_log = CommandLog::Remove {
-                key: key.clone(),
-            };
+            let command_log = CommandLog::Remove { key: key.clone() };
             let mut serialized = serde_json::to_string(&command_log).unwrap();
             let old_len = self.file_writer.pos;
             let len = self.file_writer.write(serialized.as_bytes())?;
             self.file_writer.flush();
             self.log_size += len as u64;
-            let command_ops = CommandOps {
+            let _command_ops = CommandOps {
                 file_id: self.current_active_log,
                 pos: old_len,
                 len: self.file_writer.pos - old_len,
@@ -129,7 +128,6 @@ impl KvStore {
         }
     }
 
-
     fn sorted_file_keys(&self) -> Result<Vec<u64>> {
         let mut keys: Vec<u64> = self.file_readers.keys().map(|&k| k).collect();
         keys.sort_unstable();
@@ -139,10 +137,12 @@ impl KvStore {
     fn compaction(&mut self) -> Result<()> {
         self.file_writer.writer.flush();
         //Creating new file
-        let new_active_file_id = self.current_active_log + 1;
-        self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?;
-        self.current_active_log = new_active_file_id;
-
+        let archive_log_file = self.current_active_log + 1;
+        self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(
+            archive_log_file,
+            self.log_dir.as_path(),
+        ))?)?;
+        self.current_active_log = archive_log_file;
 
         //Copy active log to new file
         let mut new_data_map = BTreeMap::new();
@@ -156,30 +156,37 @@ impl KvStore {
             chunk.read(log.as_mut_slice());
 
             let len = self.file_writer.write(log.as_slice())?;
-            new_data_map.insert(key.clone(), CommandOps {
-                file_id: self.current_active_log,
-                pos,
-                len: len as u64,
-            });
+            new_data_map.insert(
+                key.clone(),
+                CommandOps {
+                    file_id: self.current_active_log,
+                    pos,
+                    len: len as u64,
+                },
+            );
 
             pos += len as u64;
         }
         self.file_writer.flush();
-
 
         //gather old file names
         let old_files = self.sorted_file_keys()?;
 
         //clean readers, close all reader of old files
         self.file_readers.clear();
-        self.file_readers.insert(new_active_file_id, BufReaderWithPos::new(File::open(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?);
+        self.file_readers.insert(
+            archive_log_file,
+            BufReaderWithPos::new(File::open(get_file_name_from_log_id(
+                archive_log_file,
+                self.log_dir.as_path(),
+            ))?)?,
+        );
 
         //delete old files
         for file_id in old_files {
             let path = get_file_name_from_log_id(file_id, self.log_dir.as_path());
             fs::remove_file(path)?;
         }
-
 
         //replace data map
         self.data_map = new_data_map;
@@ -188,8 +195,17 @@ impl KvStore {
         self.file_writer.writer.flush();
         //Creating new file
         let new_active_file_id = self.current_active_log + 1;
-        self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?;
-        self.file_readers.insert(new_active_file_id, BufReaderWithPos::new(File::open(get_file_name_from_log_id(new_active_file_id, self.log_dir.as_path()))?)?);
+        self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(
+            new_active_file_id,
+            self.log_dir.as_path(),
+        ))?)?;
+        self.file_readers.insert(
+            new_active_file_id,
+            BufReaderWithPos::new(File::open(get_file_name_from_log_id(
+                new_active_file_id,
+                self.log_dir.as_path(),
+            ))?)?,
+        );
         self.current_active_log = new_active_file_id;
 
         //reset log size
@@ -206,18 +222,15 @@ impl KvStore {
             while let Some(command) = stream.next() {
                 let new_pos = stream.byte_offset() as u64;
                 match command? {
-                    CommandLog::Set {
-                        key, value
-                    } => {
-                        self.data_map.insert(key, CommandOps {
+                    CommandLog::Set { key, value: _ } => self.data_map.insert(
+                        key,
+                        CommandOps {
                             pos,
                             len: new_pos - pos,
                             file_id: log_file_id,
-                        })
-                    }
-                    CommandLog::Remove { key } => {
-                        self.data_map.remove(key.as_str())
-                    }
+                        },
+                    ),
+                    CommandLog::Remove { key } => self.data_map.remove(key.as_str()),
                 };
                 pos = new_pos
             }
@@ -225,14 +238,15 @@ impl KvStore {
         Ok(())
     }
 
-
     fn get_log_files_sorted(path: &Path) -> Result<Vec<u64>> {
         let mut logs: Vec<u64> = fs::read_dir(path)?
             .flat_map(|res| -> Result<_> { Ok(res?.path()) })
-            .filter(|path| { path.is_file() && path.extension().unwrap() == "log" })
+            .filter(|path| path.is_file() && path.extension().unwrap() == "log")
             .map(|path| {
                 let filename = path.file_name().unwrap().to_str().unwrap();
-                String::from(filename).trim_end_matches(".log").parse::<u64>()
+                String::from(filename)
+                    .trim_end_matches(".log")
+                    .parse::<u64>()
             })
             .flatten()
             .collect();
@@ -245,7 +259,6 @@ fn get_file_name_from_log_id(id: u64, base: &Path) -> PathBuf {
     base.join(format!("{}.log", id))
 }
 
-
 #[derive(Copy, Clone)]
 struct CommandOps {
     file_id: u64,
@@ -256,16 +269,14 @@ struct CommandOps {
 struct BufReaderWithPos {
     reader: BufReader<File>,
     pos: u64,
+    //The reason why we need pos is because the underlying cursor in File may be moved by other file pointer.
 }
 
 impl BufReaderWithPos {
     fn new(mut file: File) -> Result<Self> {
         let pos = file.seek(SeekFrom::Current(0))?;
         let reader = BufReader::new(file);
-        Ok(BufReaderWithPos {
-            reader,
-            pos,
-        })
+        Ok(BufReaderWithPos { reader, pos })
     }
 }
 
@@ -293,10 +304,7 @@ impl BufWriterWithPos {
     fn new(mut file: File) -> Result<Self> {
         let pos = file.seek(SeekFrom::Current(0))?;
         let writer = BufWriter::new(file);
-        Ok(BufWriterWithPos {
-            writer,
-            pos,
-        })
+        Ok(BufWriterWithPos { writer, pos })
     }
 }
 

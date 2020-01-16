@@ -1,5 +1,5 @@
-pub use kv::KvStore;
 use crate::Error::{IoError, SerdeError};
+pub use kv::KvStore;
 use std::io;
 
 mod kv;
@@ -20,7 +20,7 @@ impl std::convert::From<std::io::Error> for Error {
     }
 }
 
-impl std::convert::From<serde_json::error::Error> for Error{
+impl std::convert::From<serde_json::error::Error> for Error {
     fn from(err: serde_json::error::Error) -> Self {
         SerdeError(err)
     }

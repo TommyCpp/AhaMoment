@@ -2,13 +2,13 @@ use assert_cmd::prelude::*;
 use kvs::{KvStore, Result};
 use predicates::ord::eq;
 use predicates::str::{contains, is_empty, PredicateStrExt};
-use std::process::Command;
-use tempfile::TempDir;
-use walkdir::WalkDir;
+use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::fs;
+use std::process::Command;
+use tempfile::TempDir;
+use walkdir::WalkDir;
 
 // `kvs` with no args should exit with a non-zero code.
 #[test]
@@ -74,7 +74,6 @@ fn cli_get_stored() -> Result<()> {
     store.set("key2".to_owned(), "value2".to_owned())?;
     drop(store);
 
-
     Command::cargo_bin("kvs")
         .unwrap()
         .args(&["get", "key1"])
@@ -90,7 +89,6 @@ fn cli_get_stored() -> Result<()> {
         .assert()
         .success()
         .stdout(eq("value2").trim());
-
 
     Ok(())
 }
