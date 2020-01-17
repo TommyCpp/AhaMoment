@@ -7,6 +7,7 @@ use clap::{App, Arg, SubCommand};
 
 use kvs::{Result, DEFAULT_PORT, DEFAULT_IP};
 use kvs::KvsEngine;
+use std::net::TcpStream;
 
 fn main() -> Result<()> {
     let default_addr = format!("{}:{}", DEFAULT_IP, DEFAULT_PORT);
@@ -42,7 +43,7 @@ fn main() -> Result<()> {
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("key").unwrap();
-            match    kvs.remove(String::from(key)) {
+            match kvs.remove(String::from(key)) {
                 Err(err) => match err {
                     kvs::Error::NotFoundError => {
                         println!("Key not found");
@@ -57,4 +58,9 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn send_command(addr: &str) {
+    let mut stream = TcpStream::connect(addr).unwrap();
+
 }

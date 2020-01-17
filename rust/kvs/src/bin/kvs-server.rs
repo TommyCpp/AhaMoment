@@ -1,5 +1,8 @@
 use kvs::{Result, DEFAULT_IP, DEFAULT_PORT};
+use std::net::{TcpListener, TcpStream};
 use clap::{App, Arg};
+use log::{info, error};
+use std::process::exit;
 
 
 ///
@@ -10,6 +13,7 @@ use clap::{App, Arg};
 ///
 ///
 fn main() -> Result<()> {
+    env_logger::init();
     let default_addr = format!("{}:{}", DEFAULT_IP, DEFAULT_PORT);
     let matches = App::new("kvs-server")
         .version(env!("CARGO_PKG_VERSION"))
@@ -31,9 +35,26 @@ fn main() -> Result<()> {
 
     let addr = matches.value_of("addr").unwrap();
     let engine = matches.value_of("engine").unwrap();
+    info!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
 
-    println!("engine:{}", engine);
-    println!("addr:{}", addr);
+
+    //bind the socket
+    let listener = match TcpListener::bind(addr) {
+        Ok(listener) => {
+            info!("connect to {}", addr);
+            listener
+        }
+        Err(err) => {
+            error!("{}", err);
+            exit(1);
+        }
+    };
+    for stream in listener.incoming() {
+        handler(stream?);
+    }
+
 
     Ok(())
 }
+
+fn handler(stream: TcpStream) {}

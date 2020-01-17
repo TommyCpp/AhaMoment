@@ -1,3 +1,8 @@
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
+
 pub use kv::KvStore;
 pub use crate::error::Error;
 pub use common::KvsEngine;

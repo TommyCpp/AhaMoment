@@ -11,6 +11,8 @@ clap = "2.32.0"
 failure = "0.1.5"
 serde = "1.0.104"
 serde_json = "1.0"
+log = "0.4.8"
+env_logger = "0.7.1"
 
 [dev-dependencies]
 assert_cmd = "0.11"
@@ -19,7 +21,6 @@ predicates = "1.0.0"
 rand = "0.6.5"
 tempfile = "3.0.7"
 walkdir = "2.2.7"
-log="0.4.8"
 
 [[bench]]
 name = "benchmark"
