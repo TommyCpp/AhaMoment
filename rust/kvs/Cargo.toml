@@ -19,6 +19,7 @@ predicates = "1.0.0"
 rand = "0.6.5"
 tempfile = "3.0.7"
 walkdir = "2.2.7"
+log="0.4.8"
 
 [[bench]]
 name = "benchmark"
