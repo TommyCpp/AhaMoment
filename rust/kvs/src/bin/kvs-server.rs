@@ -1,8 +1,6 @@
-use kvs::Result;
-use clap::{App, Arg, SubCommand};
+use kvs::{Result, DEFAULT_IP, DEFAULT_PORT};
+use clap::{App, Arg};
 
-const DEFAULT_IP: &str = "127.0.0.0";
-const DEFAULT_PORT: u32 = 4000;
 
 ///
 /// Start a KV store server

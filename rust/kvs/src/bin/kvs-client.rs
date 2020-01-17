@@ -5,10 +5,11 @@ use std::process::exit;
 
 use clap::{App, Arg, SubCommand};
 
-use kvs::Result;
+use kvs::{Result, DEFAULT_PORT, DEFAULT_IP};
 use kvs::KvsEngine;
 
 fn main() -> Result<()> {
+    let default_addr = format!("{}:{}", DEFAULT_IP, DEFAULT_PORT);
     let mut kvs = kvs::KvStore::open(current_dir()?.as_path()).unwrap();
     let matches = App::new("kvs-client")
         .version(env!("CARGO_PKG_VERSION"))
@@ -31,13 +32,13 @@ fn main() -> Result<()> {
                     println!("Key not found");
                     exit(0)
                 }
-                Err(why) => panic!("Other errors"),
+                Err(_why) => panic!("Other errors"),
             };
         }
         ("set", Some(matches)) => {
             let key = matches.value_of("key").unwrap();
             let value = matches.value_of("value").unwrap();
-            kvs.set(String::from(key), String::from(value));
+            kvs.set(String::from(key), String::from(value))?;
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("key").unwrap();

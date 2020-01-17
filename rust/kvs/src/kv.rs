@@ -72,7 +72,7 @@ impl KvStore {
     }
 
     fn compaction(&mut self) -> Result<()> {
-        self.file_writer.writer.flush();
+        self.file_writer.writer.flush()?;
         //Creating new file
         let archive_log_file = self.current_active_log + 1;
         self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(
@@ -86,11 +86,11 @@ impl KvStore {
         let mut pos = self.file_writer.pos;
         for (key, command_ops) in self.data_map.iter() {
             let mut log = vec![0; command_ops.len as usize];
-            let mut reader_ref: &mut BufReaderWithPos;
+            let reader_ref: &mut BufReaderWithPos;
             reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
-            reader_ref.seek(SeekFrom::Start(command_ops.pos));
+            reader_ref.seek(SeekFrom::Start(command_ops.pos))?;
             let mut chunk = reader_ref.take(command_ops.len);
-            chunk.read(log.as_mut_slice());
+            chunk.read(log.as_mut_slice())?;
 
             let len = self.file_writer.write(log.as_slice())?;
             new_data_map.insert(
@@ -104,7 +104,7 @@ impl KvStore {
 
             pos += len as u64;
         }
-        self.file_writer.flush();
+        self.file_writer.flush()?;
 
         //gather old file names
         let old_files = self.sorted_file_keys()?;
@@ -129,7 +129,7 @@ impl KvStore {
         self.data_map = new_data_map;
 
         //create new log file
-        self.file_writer.writer.flush();
+        self.file_writer.writer.flush()?;
         //Creating new file
         let new_active_file_id = self.current_active_log + 1;
         self.file_writer = BufWriterWithPos::new(File::create(get_file_name_from_log_id(
@@ -151,7 +151,7 @@ impl KvStore {
     }
 
     fn read_log(&mut self) -> Result<()> {
-        let mut keys = self.sorted_file_keys()?;
+        let keys = self.sorted_file_keys()?;
         for log_file_id in keys {
             let reader = self.file_readers.get_mut(&log_file_id).unwrap();
             let mut pos = reader.seek(SeekFrom::Start(0))?;
@@ -198,10 +198,10 @@ impl KvsEngine for KvStore {
             key: key.clone(),
             value,
         };
-        let mut serialized = serde_json::to_string(&command_log).unwrap();
+        let serialized = serde_json::to_string(&command_log).unwrap();
         let old_len = self.file_writer.pos;
         let len = self.file_writer.write(serialized.as_bytes())?;
-        self.file_writer.flush();
+        self.file_writer.flush()?;
         self.log_size += len as u64;
         let command_ops = CommandOps {
             file_id: self.current_active_log,
@@ -220,7 +220,7 @@ impl KvsEngine for KvStore {
             Some(&command_ops) => {
                 let reader_ref: &mut BufReaderWithPos;
                 reader_ref = self.file_readers.get_mut(&command_ops.file_id).unwrap();
-                reader_ref.seek(SeekFrom::Start(command_ops.pos));
+                reader_ref.seek(SeekFrom::Start(command_ops.pos))?;
                 let chunk = reader_ref.take(command_ops.len);
                 let command: CommandLog = serde_json::from_reader(chunk)?;
                 match command {
@@ -239,10 +239,10 @@ impl KvsEngine for KvStore {
             Err(NotFoundError)
         } else {
             let command_log = CommandLog::Remove { key: key.clone() };
-            let mut serialized = serde_json::to_string(&command_log).unwrap();
+            let serialized = serde_json::to_string(&command_log).unwrap();
             let old_len = self.file_writer.pos;
             let len = self.file_writer.write(serialized.as_bytes())?;
-            self.file_writer.flush();
+            self.file_writer.flush()?;
             self.log_size += len as u64;
             let _command_ops = CommandOps {
                 file_id: self.current_active_log,
