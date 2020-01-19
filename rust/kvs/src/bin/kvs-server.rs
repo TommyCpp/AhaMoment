@@ -1,8 +1,10 @@
-use kvs::{Result, DEFAULT_IP, DEFAULT_PORT};
-use std::net::{TcpListener, TcpStream};
+use kvs::{Result, DEFAULT_IP, DEFAULT_PORT, SLED_STORE_NAME, KV_STORE_NAME, KvServer, SledStore, KvStore};
+use std::net::{TcpListener, TcpStream, SocketAddr};
 use clap::{App, Arg};
 use log::{info, error};
 use std::process::exit;
+use std::env::current_dir;
+use kvs::CommandProtocol;
 
 
 ///
@@ -27,9 +29,9 @@ fn main() -> Result<()> {
             Arg::with_name("engine")
                 .long("engine")
                 .required(false)
-                .possible_value("sled")
-                .possible_value("kvs")
-                .default_value("kvs")
+                .possible_value(SLED_STORE_NAME)
+                .possible_value(KV_STORE_NAME)
+                .default_value(KV_STORE_NAME)
         )
         .get_matches();
 
@@ -37,24 +39,14 @@ fn main() -> Result<()> {
     let engine = matches.value_of("engine").unwrap();
     info!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
 
-
-    //bind the socket
-    let listener = match TcpListener::bind(addr) {
-        Ok(listener) => {
-            info!("connect to {}", addr);
-            listener
-        }
-        Err(err) => {
-            error!("{}", err);
-            exit(1);
-        }
-    };
-    for stream in listener.incoming() {
-        handler(stream?);
+    if engine == SLED_STORE_NAME {
+        let mut server = KvServer::<SledStore>::new(addr.parse()?, SledStore::open(current_dir()?.as_path())?)?;
+        server.serve()
+    } else {
+        let mut server = KvServer::<KvStore>::new(addr.parse()?, KvStore::open(current_dir()?.as_path())?)?;
+        server.serve()
     }
 
 
     Ok(())
 }
-
-fn handler(stream: TcpStream) {}

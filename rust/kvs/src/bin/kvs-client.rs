@@ -45,7 +45,7 @@ fn main() -> Result<()> {
             let key = matches.value_of("key").unwrap();
             match kvs.remove(String::from(key)) {
                 Err(err) => match err {
-                    kvs::Error::NotFoundError => {
+                    kvs::KvError::NotFoundError => {
                         println!("Key not found");
                         exit(1)
                     }

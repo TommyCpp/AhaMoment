@@ -1,7 +1,10 @@
-use crate::Result;
+use serde::{Deserialize, Serialize};
+use serde_json::Deserializer;
 
-pub trait KvsEngine {
-    fn set(&mut self, key: String, value: String) -> Result<()>;
-    fn get(&mut self, key: String) -> Result<Option<String>>;
-    fn remove(&mut self, key: String) -> Result<()>;
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum CommandProtocol {
+    Get { key: String },
+    Remove { key: String },
+    Set { key: String, value: String },
 }

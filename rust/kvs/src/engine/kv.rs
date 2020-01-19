@@ -1,5 +1,4 @@
 use std::{fs, io};
-use crate::common::KvsEngine;
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
@@ -8,10 +7,11 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Deserializer;
 
-use crate::{Error, Result};
-use crate::Error::NotFoundError;
+use crate::{KvError, Result, KvsEngine};
+use crate::KvError::NotFoundError;
 
-const LOG_SIZE: u64 = 1024 * 10; //byte
+//byte
+const LOG_SIZE: u64 = 1024 * 10;
 
 
 pub struct KvStore {
@@ -225,7 +225,7 @@ impl KvsEngine for KvStore {
                 let command: CommandLog = serde_json::from_reader(chunk)?;
                 match command {
                     CommandLog::Set { key: _, value } => Ok(Some(value)),
-                    _ => Err(Error::InternalError(String::from(
+                    _ => Err(KvError::InternalError(String::from(
                         "The log should not be remove command log",
                     ))),
                 }
