@@ -1,4 +1,4 @@
-use crate::{KvsEngine, SLED_STORE_NAME, CommandProtocol};
+use crate::{KvsEngine, SLED_STORE_NAME, Request};
 use crate::engine::kv::KvStore;
 use crate::engine::sled::SledStore;
 use std::path::Path;
@@ -41,10 +41,10 @@ impl<T: KvsEngine> KvServer<T> {
 
     fn handle(&mut self, stream: TcpStream) -> Result<()> {
         let mut de = serde_json::Deserializer::from_reader(&stream);
-        match CommandProtocol::deserialize(&mut de) {
+        match Request::deserialize(&mut de) {
             Ok(command) => {
                 match command {
-                    CommandProtocol::Get { key } => {
+                    Request::Get { key } => {
                         match self.engine.get(key) {
                             Ok(v) => {
                                 let mut writer = BufWriter::new(&stream);
@@ -55,11 +55,11 @@ impl<T: KvsEngine> KvServer<T> {
                             Err(err) => Err(err)
                         }
                     }
-                    CommandProtocol::Remove { key } => {
+                    Request::Remove { key } => {
                         self.engine.remove(key)?;
                         Ok(())
                     }
-                    CommandProtocol::Set { key, value } => {
+                    Request::Set { key, value } => {
                         self.engine.set(key, value)?;
                         Ok(())
                     }

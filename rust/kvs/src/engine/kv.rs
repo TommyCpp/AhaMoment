@@ -178,7 +178,7 @@ impl KvStore {
     fn get_log_files_sorted(path: &Path) -> Result<Vec<u64>> {
         let mut logs: Vec<u64> = fs::read_dir(path)?
             .flat_map(|res| -> Result<_> { Ok(res?.path()) })
-            .filter(|path| path.is_file() && path.extension().unwrap() == "log")
+            .filter(|path| path.is_file() && path.extension().unwrap_or_default() == "log")
             .map(|path| {
                 let filename = path.file_name().unwrap().to_str().unwrap();
                 String::from(filename)

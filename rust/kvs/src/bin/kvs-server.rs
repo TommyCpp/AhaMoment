@@ -4,7 +4,7 @@ use clap::{App, Arg};
 use log::{info, error};
 use std::process::exit;
 use std::env::current_dir;
-use kvs::CommandProtocol;
+use kvs::Request;
 
 
 ///
@@ -39,12 +39,19 @@ fn main() -> Result<()> {
     let engine = matches.value_of("engine").unwrap();
     info!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
 
+    ///
+    ///
+    macro_rules! start_server {
+        ($engine:ty) => {
+        //Start the KvServer with given engine
+        KvServer::<$engine>::new(addr.parse()?, <$engine>::open(current_dir()?.as_path())?)?.serve();
+        };
+    }
+
     if engine == SLED_STORE_NAME {
-        let mut server = KvServer::<SledStore>::new(addr.parse()?, SledStore::open(current_dir()?.as_path())?)?;
-        server.serve()
+        start_server!(SledStore)
     } else {
-        let mut server = KvServer::<KvStore>::new(addr.parse()?, KvStore::open(current_dir()?.as_path())?)?;
-        server.serve()
+        start_server!(KvStore)
     }
 
 

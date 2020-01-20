@@ -13,10 +13,11 @@ pub use common::*;
 pub use engine::SLED_STORE_NAME;
 
 
-mod engine;
+pub mod engine;
 mod server;
 mod error;
 mod common;
+mod client;
 
 pub type Result<T> = std::result::Result<T, KvError>;
 

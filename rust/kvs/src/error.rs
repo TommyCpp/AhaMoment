@@ -7,7 +7,7 @@ use failure::Fail;
 
 #[derive(Debug, Fail)]
 pub enum KvError {
-    #[fail(display = "Not found")]
+    #[fail(display = "Key Not found")]
     NotFoundError,
     #[fail(display = "Io error: {}", _0)]
     IoError(io::Error),
