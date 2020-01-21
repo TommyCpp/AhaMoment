@@ -1,4 +1,4 @@
-use crate::{KvsEngine, SLED_STORE_NAME, Request};
+use crate::{KvsEngine, SLED_STORE_NAME, Request, Response};
 use crate::engine::kv::KvStore;
 use crate::engine::sled::SledStore;
 use std::path::Path;
@@ -29,7 +29,7 @@ impl<T: KvsEngine> KvServer<T> {
             match stream {
                 Ok(stream) => {
                     if let Err(err) = self.handle(stream) {
-                        error!("Error:{}", err)
+//                        error!("Error:{}", err)
                     }
                 }
                 Err(err) => {
@@ -47,20 +47,40 @@ impl<T: KvsEngine> KvServer<T> {
                     Request::Get { key } => {
                         match self.engine.get(key) {
                             Ok(v) => {
-                                let mut writer = BufWriter::new(&stream);
-                                let res = v.unwrap_or(String::from("None"));
-                                writer.write(res.as_bytes());
+                                let res = v.unwrap_or(String::from("Key not found"));
+                                let response = Response::Success {
+                                    val: res,
+                                };
+                                serde_json::to_writer(&stream, &response);
                                 Ok(())
                             }
-                            Err(err) => Err(err)
+                            Err(err) => {
+                                let response = Response::Error {
+                                    error: format!("{}", err)
+                                };
+                                serde_json::to_writer(&stream, &response);
+                                Err(err)
+                            }
                         }
                     }
                     Request::Remove { key } => {
-                        self.engine.remove(key)?;
-                        Ok(())
+                        if let Err(err) = self.engine.remove(key) {
+                            serde_json::to_writer(&stream, &Response::Error {
+                                error: format!("{}", err)
+                            });
+                            Err(err)
+                        } else {
+                            serde_json::to_writer(&stream, &Response::Success {
+                                val: String::from("")
+                            });
+                            Ok(())
+                        }
                     }
                     Request::Set { key, value } => {
                         self.engine.set(key, value)?;
+                        serde_json::to_writer(&stream, &Response::Success {
+                            val: String::from("")
+                        });
                         Ok(())
                     }
                 }

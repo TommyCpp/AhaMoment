@@ -14,13 +14,6 @@ impl SledStore {
     }
 }
 
-impl SledStore {
-    /// Creates a `SledKvsEngine` from `sled::Db`.
-    pub fn new(db: Db) -> Self {
-        SledStore(db)
-    }
-}
-
 impl KvsEngine for SledStore {
     fn set(&mut self, key: String, value: String) -> Result<()> {
         let tree: &Tree = &self.0;
@@ -40,7 +33,10 @@ impl KvsEngine for SledStore {
 
     fn remove(&mut self, key: String) -> Result<()> {
         let tree: &Tree = &self.0;
-        tree.del(key)?.ok_or(KvError::NotFoundError)?;
+        if tree.get(key.clone())?.is_none() {
+            return Err(KvError::NotFoundError);
+        }
+        tree.del(key)?;
         tree.flush()?;
         Ok(())
     }

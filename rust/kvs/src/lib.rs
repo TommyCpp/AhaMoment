@@ -9,6 +9,7 @@ pub use engine::*;
 pub use engine::KV_STORE_NAME;
 pub use engine::kv;
 pub use server::KvServer;
+pub use client::*;
 pub use common::*;
 pub use engine::SLED_STORE_NAME;
 
@@ -22,6 +23,6 @@ mod client;
 pub type Result<T> = std::result::Result<T, KvError>;
 
 
-pub const DEFAULT_IP: &str = "127.0.0.0";
+pub const DEFAULT_IP: &str = "127.0.0.1";
 pub const DEFAULT_PORT: u32 = 4000;
 

@@ -1,5 +1,5 @@
 use assert_cmd::prelude::*;
-use kvs::{KvStore, Result};
+use kvs::{KvStore, Result, KvClient};
 use predicates::ord::eq;
 use predicates::str::{contains, is_empty, PredicateStrExt};
 use std::{fs, thread};
@@ -12,6 +12,7 @@ use walkdir::WalkDir;
 use kvs::engine::KvsEngine;
 use std::sync::mpsc;
 use std::time::Duration;
+use std::env::current_dir;
 
 // `kvs-client` with no args should exit with a non-zero code.
 #[test]

@@ -31,13 +31,13 @@ fn main() -> Result<()> {
                 .required(false)
                 .possible_value(SLED_STORE_NAME)
                 .possible_value(KV_STORE_NAME)
-                .default_value(KV_STORE_NAME)
+                .default_value(SLED_STORE_NAME)
         )
         .get_matches();
 
     let addr = matches.value_of("addr").unwrap();
     let engine = matches.value_of("engine").unwrap();
-    info!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
+    error!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
 
     ///
     ///

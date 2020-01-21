@@ -2,65 +2,71 @@ extern crate clap;
 
 use std::env::current_dir;
 use std::process::exit;
+use env_logger;
+use log::error;
 
 use clap::{App, Arg, SubCommand};
 
-use kvs::{Result, DEFAULT_PORT, DEFAULT_IP};
+use kvs::{Result, DEFAULT_PORT, DEFAULT_IP, KvClient};
 use kvs::KvsEngine;
-use std::net::TcpStream;
+use std::net::{TcpStream, SocketAddr};
 
 fn main() -> Result<()> {
+    env_logger::init();
     let default_addr = format!("{}:{}", DEFAULT_IP, DEFAULT_PORT);
-    let mut kvs = kvs::KvStore::open(current_dir()?.as_path()).unwrap();
+    let addr_arg = Arg::with_name("addr").long("addr").required(true).default_value(default_addr.as_str());
+
     let matches = App::new("kvs-client")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
-        .subcommand(SubCommand::with_name("get").arg(Arg::with_name("key").required(true).index(1)))
+        .subcommand(SubCommand::with_name("get")
+            .arg(Arg::with_name("key").required(true).index(1))
+            .arg(addr_arg.clone()))
         .subcommand(
             SubCommand::with_name("set")
                 .arg(Arg::with_name("key").required(true).index(1))
-                .arg(Arg::with_name("value").required(true).index(2)),
+                .arg(Arg::with_name("value").required(true).index(2))
+                .arg(addr_arg.clone()),
         )
-        .subcommand(SubCommand::with_name("rm").arg(Arg::with_name("key").required(true).index(1)))
+        .subcommand(SubCommand::with_name("rm")
+            .arg(Arg::with_name("key").required(true).index(1))
+            .arg(addr_arg.clone()))
         .get_matches();
+
 
     match matches.subcommand() {
         ("get", Some(matches)) => {
             let key = matches.value_of("key").unwrap();
-            match kvs.get(String::from(key)) {
-                Ok(Some(val)) => println!("{}", val),
-                Ok(None) => {
-                    println!("Key not found");
-                    exit(0)
+            let addr = matches.value_of("addr").unwrap();
+            let mut client = KvClient::new(addr.parse()?)?;
+
+            match client.get(String::from(key)) {
+                Ok(val) => {
+                    println!("{}", val)
                 }
-                Err(_why) => panic!("Other errors"),
-            };
+                Err(err) => {
+                    println!("{}", err)
+                }
+            }
         }
         ("set", Some(matches)) => {
             let key = matches.value_of("key").unwrap();
             let value = matches.value_of("value").unwrap();
-            kvs.set(String::from(key), String::from(value))?;
+            let addr = matches.value_of("addr").unwrap();
+            let mut client = KvClient::new(addr.parse()?)?;
+            client.set(String::from(key), String::from(value));
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("key").unwrap();
-            match kvs.remove(String::from(key)) {
-                Err(err) => match err {
-                    kvs::KvError::NotFoundError => {
-                        println!("Key not found");
-                        exit(1)
-                    }
-                    _ => panic!("Other error"),
-                },
-                Ok(_) => (),
-            };
+            let addr = matches.value_of("addr").unwrap();
+            let mut client = KvClient::new(addr.parse()?)?;
+            if let Err(err) = client.remove(String::from(key)) {
+                error!("Key not found");
+                exit(1);
+            } else {
+            }
         }
         _ => exit(1),
     }
-
     Ok(())
-}
-
-fn send_command(addr: &str) {
-    let mut stream = TcpStream::connect(addr).unwrap();
-
 }

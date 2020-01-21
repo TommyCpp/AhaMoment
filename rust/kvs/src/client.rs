@@ -1,7 +1,10 @@
 use std::net::{TcpStream, SocketAddr};
-use crate::{Result, Request, Response};
+use crate::{Result, Request, Response, KvError};
 use serde::{Deserialize, Serialize};
 use serde_json::{Deserializer, error};
+use crate::Response::Error;
+use std::process::exit;
+use std::io::Read;
 
 pub struct KvClient {
     stream: TcpStream
@@ -16,58 +19,54 @@ impl KvClient {
         )
     }
 
-    pub fn set(&mut self, key: String, value: String) {
+    pub fn set(&mut self, key: String, value: String) -> Result<()> {
         let request = Request::Set {
             key,
             value,
         };
 
-        self.send_request(request);
+        if let Err(err) = self.handle_request(request) {
+            Err(err)
+        } else {
+            Ok(())
+        }
     }
 
-    pub fn get(&mut self, key: String) {
+    pub fn get(&mut self, key: String) -> Result<String> {
         let request = Request::Get {
             key
         };
 
-        self.send_request(request);
+        self.handle_request(request)
     }
 
-    pub fn remove(&mut self, key: String){
+    pub fn remove(&mut self, key: String) -> Result<()> {
         let request = Request::Remove {
             key
         };
 
-        self.send_request(request);
+        if let Err(err) = self.handle_request(request) {
+            Err(err)
+        } else {
+            Ok(())
+        }
     }
 
-    fn send_request(&mut self, request: Request) {
+    fn handle_request(&mut self, request: Request) -> Result<String> {
         serde_json::to_writer(&self.stream, &request); //set request
 
-        let mut de = serde_json::Deserializer::from_reader(&self.stream);
-        match Response::deserialize(&mut de) {
-            Ok(response) => {
-                match response {
-                    Response::Success { val } => {
-                        match request {
-                            Request::Set { key, value } => {
-                                info!("Insert key {}, value {}", key, value)
-                            }
-                            Request::Get { key } => {
-                                info!("The value of key {} is {}", key, val)
-                            }
-                            Request::Remove { key } => {
-                                info!("The value with key {} is removed", key)
-                            }
-                        }
-                    }
-                    Response::Error { error } => {
-                        error!("{}", error)
-                    }
+        let response: Response = serde_json::from_reader(&self.stream)?;
+        match response {
+            Response::Success { val } => {
+                if let Request::Get { key } = request {
+                    Ok(val)
+                } else {
+                    Ok(String::from(""))
                 }
             }
-            Err(err) => {
-                error!("{}", err)
+            Response::Error { error } => {
+                println!("{}",error);
+                Err(KvError::NotFoundError)
             }
         }
     }
