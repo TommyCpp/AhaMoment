@@ -22,7 +22,7 @@ fn set_bench(c: &mut Criterion) {
                         store.set(format!("key{}", i), "value".to_string()).unwrap();
                     }
                 },
-                BatchSize::NumBatches(10),
+                BatchSize::SmallInput,
             )
         },
         iter::once(()),
@@ -38,9 +38,10 @@ fn set_bench(c: &mut Criterion) {
                         db.set(format!("key{}", i), "value".to_string()).unwrap();
                     }
                 },
-                BatchSize::NumBatches(10),
+                BatchSize::SmallInput,
             )
-        });
+        })
+        .sample_size(10);
     c.bench("set_bench", bench);
 }
 
@@ -75,7 +76,8 @@ fn get_bench(c: &mut Criterion) {
             b.iter(|| {
                 db.get(format!("key{}", rng.gen_range(1, 1 << i))).unwrap();
             })
-        });
+        })
+        .sample_size(10);
     c.bench("get_bench", bench);
 }
 
