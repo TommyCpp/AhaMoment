@@ -12,6 +12,10 @@ impl SledStore {
         let db = sled::Db::start_default(path)?;
         Ok(SledStore(db))
     }
+
+    pub fn new(db: Db) -> SledStore {
+        SledStore(db)
+    }
 }
 
 impl KvsEngine for SledStore {

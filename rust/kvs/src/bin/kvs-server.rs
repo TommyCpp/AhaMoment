@@ -5,6 +5,8 @@ use log::{info, error};
 use std::process::exit;
 use std::env::current_dir;
 use kvs::Request;
+use std::fs::File;
+use std::io::{Write, Read};
 
 
 ///
@@ -46,6 +48,20 @@ fn main() -> Result<()> {
         //Start the KvServer with given engine
         KvServer::<$engine>::new(addr.parse()?, <$engine>::open(current_dir()?.as_path())?)?.serve();
         };
+    }
+
+    //create config file
+    let conf_file_path = current_dir()?.as_path().join("server.conf");
+    if conf_file_path.exists() {
+        //if exists check if the the engine matches.
+        let mut engine_in_config = String::new();
+        File::open(conf_file_path)?.read_to_string(&mut engine_in_config);
+        if engine_in_config != engine {
+            exit(1)
+        }
+    } else {
+        let mut conf_file = File::create(conf_file_path)?;
+        conf_file.write(engine.as_ref());
     }
 
     if engine == SLED_STORE_NAME {
