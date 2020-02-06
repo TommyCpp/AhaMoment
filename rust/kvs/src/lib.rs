@@ -6,15 +6,13 @@ extern crate env_logger;
 pub use kv::KvStore;
 pub use crate::error::KvError;
 pub use engine::*;
-pub use engine::KV_STORE_NAME;
-pub use engine::kv;
 pub use server::KvServer;
 pub use client::*;
 pub use common::*;
-pub use engine::SLED_STORE_NAME;
 
 
 pub mod engine;
+pub mod thread_pool;
 mod server;
 mod error;
 mod common;
