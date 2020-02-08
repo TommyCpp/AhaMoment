@@ -3,31 +3,32 @@ use sled;
 use std::path::Path;
 use super::Result;
 use sled::{Tree, Db};
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
-pub struct SledStore(Db);
+pub struct SledStore(Arc<Mutex<Db>>);
 
 impl SledStore {
     pub fn open(path: &Path) -> Result<SledStore> {
         let db = sled::Db::start_default(path)?;
-        Ok(SledStore(db))
+        Ok(SledStore(Arc::new(Mutex::new(db))))
     }
 
     pub fn new(db: Db) -> SledStore {
-        SledStore(db)
+        SledStore(Arc::new(Mutex::new(db)))
     }
 }
 
 impl KvsEngine for SledStore {
-    fn set(&mut self, key: String, value: String) -> Result<()> {
-        let tree: &Tree = &self.0;
+    fn set(&self, key: String, value: String) -> Result<()> {
+        let tree: &Tree = &self.0.lock().unwrap();
         tree.set(key, value.into_bytes()).map(|_| ())?;
         tree.flush()?;
         Ok(())
     }
 
-    fn get(&mut self, key: String) -> Result<Option<String>> {
-        let tree: &Tree = &self.0;
+    fn get(&self, key: String) -> Result<Option<String>> {
+        let tree: &Tree = &self.0.lock().unwrap();
         Ok(tree
             .get(key)?
             .map(|i_vec| AsRef::<[u8]>::as_ref(&i_vec).to_vec())
@@ -35,8 +36,8 @@ impl KvsEngine for SledStore {
             .transpose()?)
     }
 
-    fn remove(&mut self, key: String) -> Result<()> {
-        let tree: &Tree = &self.0;
+    fn remove(&self, key: String) -> Result<()> {
+        let tree: &Tree = &self.0.lock().unwrap();
         if tree.get(key.clone())?.is_none() {
             return Err(KvError::NotFoundError);
         }

@@ -9,12 +9,35 @@ use serde_json::Deserializer;
 
 use crate::{KvError, Result, KvsEngine};
 use crate::KvError::NotFoundError;
+use std::sync::{Arc, Mutex};
 
 //byte
 const LOG_SIZE: u64 = 1024 * 10;
 
+#[derive(Clone)]
+pub struct KvStore(Arc<Mutex<MultiThreadKvStore>>);
 
-pub struct KvStore {
+impl KvStore {
+    pub fn open(path: &Path) -> Result<Self> {
+        Ok(KvStore(Arc::new(Mutex::new(MultiThreadKvStore::open(path)?))))
+    }
+}
+
+impl KvsEngine for KvStore {
+    fn set(&self, key: String, value: String) -> Result<()> {
+        self.0.lock().unwrap().set(key, value)
+    }
+
+    fn get(&self, key: String) -> Result<Option<String>> {
+        self.0.lock().unwrap().get(key)
+    }
+
+    fn remove(&self, key: String) -> Result<()> {
+        self.0.lock().unwrap().remove(key)
+    }
+}
+
+pub struct MultiThreadKvStore {
     data_map: BTreeMap<String, CommandOps>,
     file_readers: HashMap<u64, BufReaderWithPos>,
     file_writer: BufWriterWithPos,
@@ -30,9 +53,9 @@ enum CommandLog {
     Remove { key: String },
 }
 
-impl KvStore {
-    pub fn open(path: &Path) -> Result<KvStore> {
-        let log_file_names = KvStore::get_log_files_sorted(path)?;
+impl MultiThreadKvStore {
+    pub fn open(path: &Path) -> Result<Self> {
+        let log_file_names = MultiThreadKvStore::get_log_files_sorted(path)?;
         let mut readers_map = HashMap::<u64, BufReaderWithPos>::new();
         let active_file_name: u64 = log_file_names.last().unwrap_or(&0) + 1;
         let mut old_log_size = 0 as u64;
@@ -52,7 +75,7 @@ impl KvStore {
                 path,
             ))?)?,
         );
-        let mut store = KvStore {
+        let mut store = MultiThreadKvStore {
             data_map: BTreeMap::new(),
             file_readers: readers_map,
             file_writer: BufWriterWithPos::new(active_file)?,
@@ -190,9 +213,7 @@ impl KvStore {
         logs.sort_unstable();
         Ok(logs)
     }
-}
 
-impl KvsEngine for KvStore {
     fn set(&mut self, key: String, value: String) -> Result<()> {
         let command_log = CommandLog::Set {
             key: key.clone(),
