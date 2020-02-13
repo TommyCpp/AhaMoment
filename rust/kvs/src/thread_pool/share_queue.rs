@@ -3,7 +3,7 @@ use crate::thread_pool::{Func, ThreadPool};
 use crate::KvError;
 use std::thread;
 
-
+//todo: fix bug when thread in pool panic
 //implement a single sender, multi receiver schema.
 //Start n thread when created, those thread will in infinite loop and wait until receive some message and act accordingly.
 pub struct SharedQueueThreadPool {

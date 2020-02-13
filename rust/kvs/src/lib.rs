@@ -9,6 +9,7 @@ pub use engine::*;
 pub use server::KvServer;
 pub use client::*;
 pub use common::*;
+pub use thread_pool::*;
 
 
 pub mod engine;

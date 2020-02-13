@@ -1,9 +1,8 @@
 pub use super::Result;
 
 mod naive;
+mod rayon;
 mod share_queue;
-
-extern crate crossbeam;
 
 type Func = Box<dyn FnOnce() + Send + 'static>;
 

@@ -4,6 +4,7 @@ use std::string::FromUtf8Error;
 use std::net::AddrParseError;
 use std::fmt::Display;
 use failure::Fail;
+use rayon::ThreadPoolBuildError;
 
 #[derive(Debug, Fail)]
 pub enum KvError {
@@ -21,6 +22,8 @@ pub enum KvError {
     Utf8Error(FromUtf8Error),
     #[fail(display = "Ip addr conversation error")]
     AddrParseError(AddrParseError),
+    #[fail(display = "Error when creating thread pool")]
+    ThreadPoolBuildError(ThreadPoolBuildError),
 }
 
 impl std::convert::From<std::io::Error> for KvError {
@@ -50,5 +53,11 @@ impl From<FromUtf8Error> for KvError {
 impl From<AddrParseError> for KvError {
     fn from(err: AddrParseError) -> Self {
         KvError::AddrParseError(err)
+    }
+}
+
+impl From<rayon::ThreadPoolBuildError> for KvError {
+    fn from(err: ThreadPoolBuildError) -> Self {
+        KvError::ThreadPoolBuildError(err)
     }
 }

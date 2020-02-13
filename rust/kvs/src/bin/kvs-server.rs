@@ -1,4 +1,4 @@
-use kvs::{Result, DEFAULT_IP, DEFAULT_PORT, SLED_STORE_NAME, KV_STORE_NAME, KvServer, SledStore, KvStore};
+use kvs::{Result, DEFAULT_IP, DEFAULT_PORT, SLED_STORE_NAME, KV_STORE_NAME, KvServer, SledStore, KvStore, SharedQueueThreadPool, ThreadPool};
 use std::net::{TcpListener, TcpStream, SocketAddr};
 use clap::{App, Arg};
 use log::{info, error};
@@ -46,7 +46,7 @@ fn main() -> Result<()> {
     macro_rules! start_server {
         ($engine:ty) => {
         //Start the KvServer with given engine
-        KvServer::<$engine>::new(addr.parse()?, <$engine>::open(current_dir()?.as_path())?)?.serve();
+        KvServer::<$engine, SharedQueueThreadPool>::new(addr.parse()?, <$engine>::open(current_dir()?.as_path())?, SharedQueueThreadPool::new(4)?)?.serve();
         };
     }
 

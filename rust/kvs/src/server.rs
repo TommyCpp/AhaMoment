@@ -11,15 +11,14 @@ use std::io::{BufReader, BufWriter, Write};
 use crate::thread_pool::{ThreadPool, NaiveThreadPool};
 
 
-pub struct KvServer<T> {
+pub struct KvServer<T: KvsEngine, P: ThreadPool> {
     engine: T,
     addr: SocketAddr,
-    thread_pool: NaiveThreadPool,
+    thread_pool: P,
 }
 
-impl<T: KvsEngine> KvServer<T> {
-    pub fn new(addr: SocketAddr, engine: T) -> Result<KvServer<T>> {
-        let thread_pool = NaiveThreadPool::new(4)?;
+impl<T: KvsEngine, P: ThreadPool> KvServer<T, P> {
+    pub fn new(addr: SocketAddr, engine: T, thread_pool: P) -> Result<KvServer<T, P>> {
         Ok(KvServer {
             engine,
             addr,
