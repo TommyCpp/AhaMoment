@@ -3,7 +3,6 @@ use crate::thread_pool::{Func, ThreadPool};
 use crate::KvError;
 use std::thread;
 
-//todo: fix bug when thread in pool panic
 //implement a single sender, multi receiver schema.
 //Start n thread when created, those thread will in infinite loop and wait until receive some message and act accordingly.
 pub struct SharedQueueThreadPool {
@@ -32,6 +31,20 @@ impl ThreadPool for SharedQueueThreadPool {
 }
 
 struct TaskRunner(Receiver<Func>);
+
+impl Drop for TaskRunner {
+    fn drop(&mut self) {
+        if thread::panicking() {
+            //start a new thread
+            let new_runner = TaskRunner(self.0.clone());
+            thread::spawn(move || {
+                run_task(new_runner);
+            });
+        } else {
+            debug!("closing thread due to OS-level error when creating thread");
+        }
+    }
+}
 
 
 fn run_task(task_runner: TaskRunner) {
