@@ -1,4 +1,4 @@
-use kvs::{Result, DEFAULT_IP, DEFAULT_PORT, SLED_STORE_NAME, KV_STORE_NAME, KvServer, SledStore, KvStore, SharedQueueThreadPool, ThreadPool};
+use kvs::{Result, DEFAULT_IP, DEFAULT_PORT, SLED_STORE_NAME, KV_STORE_NAME, KvServer, SledStore, KvStore, SharedQueueThreadPool, ThreadPool, NAIVE_THREAD_POOL_NAME, SHARED_QUEUE_THREAD_POOL_NAME, RAYON_THREAD_POOL_NAME};
 use std::net::{TcpListener, TcpStream, SocketAddr};
 use clap::{App, Arg};
 use log::{info, error};
@@ -14,10 +14,13 @@ use std::io::{Write, Read};
 /// This binary has two attributes
 /// --addr, default to be 127.0.0.1:4000, the address that server bind to
 /// --engine, default to be kvs, must be either kvs or sled, the backend store engine that gonna used.
+/// --thread_pool, default to be sharequeue, must be either native, rayon or sharequeue, the thread_pool implementation that gonna be used
+/// --num_thread, default to be the same with the cpu num
 ///
 ///
 fn main() -> Result<()> {
     env_logger::init();
+    let num_cpu = num_cpus::get().to_string();
     let default_addr = format!("{}:{}", DEFAULT_IP, DEFAULT_PORT);
     let matches = App::new("kvs-server")
         .version(env!("CARGO_PKG_VERSION"))
@@ -35,6 +38,21 @@ fn main() -> Result<()> {
                 .possible_value(KV_STORE_NAME)
                 .default_value(SLED_STORE_NAME)
         )
+        .arg(
+            Arg::with_name("thread_pool")
+                .required(false)
+                .long("thread_pool")
+                .possible_value(NAIVE_THREAD_POOL_NAME)
+                .possible_value(SHARED_QUEUE_THREAD_POOL_NAME)
+                .possible_value(RAYON_THREAD_POOL_NAME)
+                .default_value(SHARED_QUEUE_THREAD_POOL_NAME)
+        )
+        .arg(
+            Arg::with_name("num_thread")
+                .required(false)
+                .long("num_thread")
+                .default_value(num_cpu.as_str())
+        )
         .get_matches();
 
     let addr = matches.value_of("addr").unwrap();
@@ -42,7 +60,7 @@ fn main() -> Result<()> {
     error!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
 
     ///
-    ///
+    ///todo: change macro_rule to fit new param
     macro_rules! start_server {
         ($engine:ty) => {
         //Start the KvServer with given engine

@@ -6,6 +6,11 @@ mod share_queue;
 
 type Func = Box<dyn FnOnce() + Send + 'static>;
 
+
+pub const NAIVE_THREAD_POOL_NAME: &str = "naive";
+pub const SHARED_QUEUE_THREAD_POOL_NAME: &str = "sharequeue";
+pub const RAYON_THREAD_POOL_NAME: &str = "rayon";
+
 enum ThreadPoolMessage {
     RunJob(Func),
     Shutdown,
