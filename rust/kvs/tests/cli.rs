@@ -178,6 +178,27 @@ fn cli_log_configuration() {
     assert!(content.contains("127.0.0.1:4001"));
 }
 
+
+#[test]
+fn cli_server_param() {
+    let temp_dir = TempDir::new().unwrap();
+    let stderr_path = temp_dir.path().join("stderr");
+    let mut cmd = Command::cargo_bin("kvs-server").unwrap();
+    let mut child = cmd
+        .args(&["--engine", "kvs", "--addr", "127.0.0.1:4001", "--thread_pool", "sharequeue", "--num_thread", "6"])
+        .current_dir(&temp_dir)
+        .stderr(File::create(&stderr_path).unwrap())
+        .spawn()
+        .unwrap();
+    thread::sleep(Duration::from_secs(1));
+    child.kill().expect("server exited before killed");
+
+    let content = fs::read_to_string(&stderr_path).expect("unable to read from stderr file");
+    assert!(content.contains(env!("CARGO_PKG_VERSION")));
+    assert!(content.contains("kvs"));
+    assert!(content.contains("127.0.0.1:4001"));
+}
+
 #[test]
 fn cli_wrong_engine() {
     // sled first, kvs second

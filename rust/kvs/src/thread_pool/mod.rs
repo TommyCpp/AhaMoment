@@ -18,6 +18,7 @@ enum ThreadPoolMessage {
 
 pub use self::naive::NaiveThreadPool;
 pub use self::share_queue::SharedQueueThreadPool;
+pub use self::rayon::RayonThreadPool;
 
 pub trait ThreadPool {
     fn new(size: u32) -> Result<Self>

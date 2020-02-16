@@ -1,13 +1,14 @@
-use kvs::{Result, DEFAULT_IP, DEFAULT_PORT, SLED_STORE_NAME, KV_STORE_NAME, KvServer, SledStore, KvStore, SharedQueueThreadPool, ThreadPool, NAIVE_THREAD_POOL_NAME, SHARED_QUEUE_THREAD_POOL_NAME, RAYON_THREAD_POOL_NAME};
-use std::net::{TcpListener, TcpStream, SocketAddr};
-use clap::{App, Arg};
-use log::{info, error};
-use std::process::exit;
 use std::env::current_dir;
-use kvs::Request;
 use std::fs::File;
-use std::io::{Write, Read};
+use std::io::{Read, Write};
+use std::net::{SocketAddr, TcpListener, TcpStream};
+use std::process::exit;
 
+use clap::{App, Arg};
+use log::{error, info};
+
+use kvs::{DEFAULT_IP, DEFAULT_PORT, KV_STORE_NAME, KvServer, KvStore, NAIVE_THREAD_POOL_NAME, NaiveThreadPool, RAYON_THREAD_POOL_NAME, Result, SHARED_QUEUE_THREAD_POOL_NAME, SharedQueueThreadPool, SLED_STORE_NAME, SledStore, ThreadPool, RayonThreadPool};
+use kvs::Request;
 
 ///
 /// Start a KV store server
@@ -57,14 +58,16 @@ fn main() -> Result<()> {
 
     let addr = matches.value_of("addr").unwrap();
     let engine = matches.value_of("engine").unwrap();
+    let thread_num = matches.value_of("num_thread").unwrap().parse::<u32>().unwrap();
+    let thread_pool_str = matches.value_of("thread_pool").unwrap();
     error!("Running KVS-Server version {} on addr {}, with backend storage engine of {}", env!("CARGO_PKG_VERSION"), addr, engine);
 
     ///
     ///todo: change macro_rule to fit new param
     macro_rules! start_server {
-        ($engine:ty) => {
+        ($engine:ty, $thread_pool:ty) => {
         //Start the KvServer with given engine
-        KvServer::<$engine, SharedQueueThreadPool>::new(addr.parse()?, <$engine>::open(current_dir()?.as_path())?, SharedQueueThreadPool::new(4)?)?.serve();
+        KvServer::<$engine, $thread_pool>::new(addr.parse()?, <$engine>::open(current_dir()?.as_path())?, <$thread_pool>::new(thread_num)?)?.serve();
         };
     }
 
@@ -83,9 +86,19 @@ fn main() -> Result<()> {
     }
 
     if engine == SLED_STORE_NAME {
-        start_server!(SledStore)
+        match thread_pool_str {
+            SHARED_QUEUE_THREAD_POOL_NAME => start_server!(SledStore, SharedQueueThreadPool),
+            RAYON_THREAD_POOL_NAME => start_server!(SledStore, RayonThreadPool),
+            NAIVE_THREAD_POOL_NAME => start_server!(SledStore, NaiveThreadPool),
+            _ => exit(2)
+        }
     } else {
-        start_server!(KvStore)
+        match thread_pool_str {
+            SHARED_QUEUE_THREAD_POOL_NAME => start_server!(KvStore, SharedQueueThreadPool),
+            RAYON_THREAD_POOL_NAME => start_server!(KvStore, RayonThreadPool),
+            NAIVE_THREAD_POOL_NAME => start_server!(KvStore, NaiveThreadPool),
+            _ => exit(2)
+        }
     }
 
 

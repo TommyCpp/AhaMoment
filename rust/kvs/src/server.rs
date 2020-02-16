@@ -28,6 +28,7 @@ impl<T: KvsEngine, P: ThreadPool> KvServer<T, P> {
 
     pub fn serve(&self) {
         let listener = TcpListener::bind(self.addr).unwrap();
+
         for stream in listener.incoming() {
             let engine = self.engine.clone();
             self.thread_pool.spawn(move || {
