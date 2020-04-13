@@ -1,4 +1,5 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet, BTreeSet};
+use std::iter::FromIterator;
 
 /// `InputCellID` is a unique identifier for an input cell.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Ord, Eq)]
@@ -36,8 +37,8 @@ pub enum RemoveCallbackError {
     NonexistentCallback,
 }
 
-type ComputeFunc<'a, T> = Box<dyn Fn(&'a [T]) -> T>;
-type CallBackFunc<T> = Box<dyn FnMut(T) -> ()>;
+type ComputeFunc<'a, T> = Box<dyn Fn(&[T]) -> T + 'a>;
+type CallBackFunc<'a, T> = Box<dyn FnMut(T) -> () + 'a>;
 
 #[derive(Clone)]
 struct InputCell<T> {
@@ -52,8 +53,9 @@ struct ComputeCell<'a, T> {
     dependencies: Vec<CellID>,
     compute_cells: Vec<ComputeCellID>,
     func: ComputeFunc<'a, T>,
+    _old_val: T,
     _val: T,
-    callbacks: BTreeMap<CallbackID, CallBackFunc<T>>, // callback will b.e called without order.
+    callbacks: BTreeMap<CallbackID, CallBackFunc<'a, T>>, // callback will b.e called without order.
 }
 
 pub struct Reactor<'a, T> {
@@ -101,7 +103,7 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
     // Notice that there is no way to *remove* a cell.
     // This means that you may assume, without checking, that if the dependencies exist at creation
     // time they will continue to exist as long as the Reactor exists.
-    pub fn create_compute<F: Fn(&[T]) -> T + 'static>(
+    pub fn create_compute<F: Fn(&[T]) -> T + 'a>(
         &mut self,
         _dependencies: &[CellID],
         _compute_func: F,
@@ -134,6 +136,7 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
             dependencies: Vec::from(_dependencies),
             compute_cells: vec![],
             func: Box::new(_compute_func),
+            _old_val: init,
             _val: init,
             callbacks: BTreeMap::new(),
         };
@@ -174,7 +177,109 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
     //
     // As before, that turned out to add too much extra complexity.
     pub fn set_value(&mut self, _id: InputCellID, _new_value: T) -> bool {
-        unimplemented!()
+        if let None = self.input_cells.get_mut(&_id) {
+            return false;
+        }
+        let cell = self.input_cells.get_mut(&_id).unwrap();
+        let dependees = cell.compute_cells.clone();
+        {
+            if _new_value == cell._val {
+                ();
+            } else {
+                cell._val = _new_value;
+            }
+        }
+
+
+        //update all dependees.
+        let mut set = BTreeSet::new();
+        let mut used = BTreeMap::<ComputeCellID, bool>::new();
+        for _id in self.compute_cells.keys() {
+            used.insert(_id.clone(), false);
+        }
+        for c in &cell.compute_cells {
+            set.insert(c.clone());
+        }
+        while !set.is_empty() {
+            let _v: Vec<ComputeCellID> = set.iter().cloned().collect();
+            for _id in _v.iter() {
+                {
+                    set.remove(_id);
+                    used.insert(_id.clone(), true);
+                    let c = self.compute_cells.get(_id).unwrap();
+                    for _c in &c.compute_cells{
+                        if !used.get(_c).unwrap(){
+                            set.insert(_c.clone());
+                        }
+                    }
+                }
+                self.update_value(*_id);
+            }
+        }
+
+
+        //callback
+        let mut res = Vec::<ComputeCellID>::new();
+        for c in dependees {
+            res.append(self.get_compute_cells(&c).as_mut())
+        }
+        let res: BTreeSet<ComputeCellID> = res.into_iter().collect();
+
+        //circuit-break if the output value hasn't change
+        for id in res.iter() {
+            let cell = self.compute_cells.get(id).unwrap();
+            if cell.compute_cells.is_empty() && cell._old_val == cell._val {
+                return true;
+            }
+        }
+
+        for id in res.iter() {
+            let cell = self.compute_cells.get_mut(id).unwrap();
+            if cell._old_val != cell._val {
+                for f in cell.callbacks.values_mut() {
+                    f(cell._val);
+                }
+            }
+        }
+
+
+        true
+    }
+
+    fn update_value(&mut self, _id: ComputeCellID) -> Vec<ComputeCellID> {
+        if let None = self.compute_cells.get_mut(&_id) {
+            return vec![];
+        };
+        let mut input = vec![];
+        {
+            let cell = self.compute_cells.get(&_id).unwrap();
+            for cell_id in &cell.dependencies {
+                let val = self.value(cell_id.clone()).unwrap();
+                input.push(val);
+            }
+        }
+
+        let cell = self.compute_cells.get_mut(&_id).unwrap();
+        let dependees = cell.compute_cells.clone();
+        {
+            cell._old_val = cell._val;
+            cell._val = (cell.func)(input.as_ref());
+        }
+
+        cell.compute_cells.clone()
+    }
+
+    fn get_compute_cells(&self, _id: &ComputeCellID) -> Vec<ComputeCellID> {
+        if self.compute_cells.get(_id).unwrap().compute_cells.len() != 0 {
+            let mut res = self.compute_cells.get(_id).unwrap().compute_cells.clone();
+            res.push(_id.clone());
+            for i in &self.compute_cells.get(_id).unwrap().compute_cells {
+                res.append(self.get_compute_cells(i).as_mut());
+            }
+            res
+        } else {
+            vec![_id.clone()]
+        }
     }
 
     // Adds a callback to the specified compute cell.
@@ -189,12 +294,18 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
     // * Exactly once if the compute cell's value changed as a result of the set_value call.
     //   The value passed to the callback should be the final value of the compute cell after the
     //   set_value call.
-    pub fn add_callback<F: FnMut(T) -> ()>(
+    pub fn add_callback<F: FnMut(T) -> () + 'a>(
         &mut self,
         _id: ComputeCellID,
         _callback: F,
     ) -> Option<CallbackID> {
-        unimplemented!()
+        let id = CallbackID(self.get_next_id());
+        if let Some(cell) = self.compute_cells.get_mut(&_id) {
+            cell.callbacks.insert(id, Box::new(_callback));
+            Some(id)
+        } else {
+            None
+        }
     }
 
     // Removes the specified callback, using an ID returned from add_callback.
@@ -207,10 +318,13 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
         cell: ComputeCellID,
         callback: CallbackID,
     ) -> Result<(), RemoveCallbackError> {
-        unimplemented!(
-            "Remove the callback identified by the CallbackID {:?} from the cell {:?}",
-            callback,
-            cell,
-        )
+        if let Some(_cell) = self.compute_cells.get_mut(&cell) {
+            if let None = _cell.callbacks.remove(&callback) {
+                return Err(RemoveCallbackError::NonexistentCallback);
+            }
+            Ok(())
+        } else {
+            return Err(RemoveCallbackError::NonexistentCell);
+        }
     }
 }
