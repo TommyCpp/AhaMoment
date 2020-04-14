@@ -200,15 +200,17 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
         for c in &cell.compute_cells {
             set.insert(c.clone());
         }
+        let mut last_one = None;
         while !set.is_empty() {
             let _v: Vec<ComputeCellID> = set.iter().cloned().collect();
             for _id in _v.iter() {
                 {
                     set.remove(_id);
                     used.insert(_id.clone(), true);
+                    last_one = Some(_id.clone());
                     let c = self.compute_cells.get(_id).unwrap();
-                    for _c in &c.compute_cells{
-                        if !used.get(_c).unwrap(){
+                    for _c in &c.compute_cells {
+                        if !used.get(_c).unwrap() {
                             set.insert(_c.clone());
                         }
                     }
@@ -217,30 +219,35 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
             }
         }
 
-
-        //callback
-        let mut res = Vec::<ComputeCellID>::new();
-        for c in dependees {
-            res.append(self.get_compute_cells(&c).as_mut())
-        }
-        let res: BTreeSet<ComputeCellID> = res.into_iter().collect();
-
-        //circuit-break if the output value hasn't change
-        for id in res.iter() {
-            let cell = self.compute_cells.get(id).unwrap();
-            if cell.compute_cells.is_empty() && cell._old_val == cell._val {
-                return true;
+        let mut exec_callback = true;
+        if last_one.is_none() {
+            exec_callback = false;
+        } else {
+            if let cell = self.compute_cells.get(&last_one.unwrap()) {
+                if cell.unwrap()._old_val != cell.unwrap()._val {
+                    exec_callback = false;
+                }
             }
         }
 
-        for id in res.iter() {
+
+        if exec_callback {}
+
+        //callback
+
+        for id in used
+            .keys()
+            .map(|k| (k, used.get(k).unwrap()))
+            .filter(|(k, v)| **v)
+            .map(|(k, v)| k)
+            .collect::<Vec<&ComputeCellID>>() {
             let cell = self.compute_cells.get_mut(id).unwrap();
             if cell._old_val != cell._val {
                 for f in cell.callbacks.values_mut() {
                     f(cell._val);
                 }
             }
-        }
+        };
 
 
         true
