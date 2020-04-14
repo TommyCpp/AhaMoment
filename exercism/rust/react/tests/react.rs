@@ -442,3 +442,28 @@ fn test_adder_with_boolean_values() {
         );
     }
 }
+
+#[test]
+fn test_graph_1(){
+    let mut reactor = Reactor::new();
+    let input = reactor.create_input(1);
+    let c1 = reactor
+        .create_compute(&[CellID::Input(input)], |v| v[0] * 2)
+        .unwrap();
+    let c3 = reactor
+        .create_compute(&[CellID::Compute(c1)], |v| v[0] + 1)
+        .unwrap();
+    let c2 = reactor
+        .create_compute(&[CellID::Compute(c3), CellID::Input(input)], |v| v[0] * v[1])
+        .unwrap();
+    let output = reactor
+        .create_compute(&[CellID::Compute(c2), CellID::Compute(c3)], |v| v[0] + v[1])
+        .unwrap();
+
+    assert_eq!(reactor.value(CellID::Compute(output)).unwrap(), 6);
+
+    reactor.set_value(input, 2);
+
+    assert_eq!(reactor.value(CellID::Compute(output)).unwrap(), 15)
+
+}
