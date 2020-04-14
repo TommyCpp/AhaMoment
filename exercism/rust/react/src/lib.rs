@@ -193,10 +193,7 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
 
         //update all dependees.
         let mut set = BTreeSet::new();
-        let mut used = BTreeMap::<ComputeCellID, bool>::new();
-        for _id in self.compute_cells.keys() {
-            used.insert(_id.clone(), false);
-        }
+        let mut used = BTreeSet::new();
         for c in &cell.compute_cells {
             set.insert(c.clone());
         }
@@ -204,18 +201,18 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
         while !set.is_empty() {
             let _v: Vec<ComputeCellID> = set.iter().cloned().collect();
             for _id in _v.iter() {
+                self.update_value(*_id);
                 {
                     set.remove(_id);
-                    used.insert(_id.clone(), true);
+                    used.insert(_id.clone());
                     last_one = Some(_id.clone());
                     let c = self.compute_cells.get(_id).unwrap();
                     for _c in &c.compute_cells {
-                        if !used.get(_c).unwrap() {
+                        if c._val != c._old_val {
                             set.insert(_c.clone());
                         }
                     }
                 }
-                self.update_value(*_id);
             }
         }
 
@@ -235,13 +232,8 @@ impl<'a, T: Copy + PartialEq> Reactor<'a, T> {
 
         //callback
 
-        for id in used
-            .keys()
-            .map(|k| (k, used.get(k).unwrap()))
-            .filter(|(k, v)| **v)
-            .map(|(k, v)| k)
-            .collect::<Vec<&ComputeCellID>>() {
-            let cell = self.compute_cells.get_mut(id).unwrap();
+        for id in used {
+            let cell = self.compute_cells.get_mut(&id).unwrap();
             if cell._old_val != cell._val {
                 for f in cell.callbacks.values_mut() {
                     f(cell._val);

@@ -444,6 +444,14 @@ fn test_adder_with_boolean_values() {
 }
 
 #[test]
+/// Compute graph will looks like
+/// I -------
+/// |       |
+/// |      C2
+/// |      |
+/// C4 <- C3
+/// |      |
+/// Out<---
 fn test_graph_1(){
     let mut reactor = Reactor::new();
     let input = reactor.create_input(1);
