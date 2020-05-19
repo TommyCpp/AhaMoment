@@ -75,8 +75,8 @@ pub fn auto_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             let len = #pat.len();
             #(assert_eq!(#args.len(), len);)*
             let mut res = Vec::with_capacity(len);
-            for idx in 0..#pat.len(){
-                res.push(#receiver_token#ident(#(#args[idx],)*));
+            for _idx in 0..#pat.len(){
+                res.push(#receiver_token#ident(#(#args[_idx].clone(),)*));
             }
             res
         }));
