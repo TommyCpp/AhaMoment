@@ -1,4 +1,4 @@
-package btree;
+package minidb.btree;
 
 /**
  * Btree Node
@@ -6,17 +6,17 @@ package btree;
 public class Node<K extends Comparable, V> {
     private Comparable[] keys;
     private Object[] values;
-    private Node<K, V>[] children;
+    private Node<K,V>[] children;
     private int len;
 
-    public Node Node(int capacity) {
-        Node node = new Node();
-        node.keys = new Comparable[capacity];
-        node.children = new Node[capacity + 1];
-        return node;
+    @SuppressWarnings("unchecked")
+    public Node(int capacity) {
+        this.keys = new Comparable[capacity];
+        this.children = (Node<K,V>[])new Node[capacity + 1];
     }
 
-    public void set(K key, V value) {
+    public V set(K key, V value) {
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -45,5 +45,9 @@ public class Node<K extends Comparable, V> {
         }
 
         return null;
+    }
+
+    void split() {
+
     }
 }
