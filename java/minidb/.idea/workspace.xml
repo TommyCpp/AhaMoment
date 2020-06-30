@@ -4,10 +4,7 @@
     <list default="true" id="2b7a6d83-d458-4268-ac5f-5612dbd32027" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/minidb/btree/FilledUpException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/minidb/btree/InternalNode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/minidb/btree/LeafNode.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/minidb/btree/TestLeafNode.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/minidb/btree/BTreeTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/minidb/btree/BTreeTest.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/target/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -16,32 +13,62 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DockManager">
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="1133">
+                    <caret line="85" column="47" selection-start-line="85" selection-start-column="47" selection-end-line="85" selection-end-column="47" />
+                    <folding>
+                      <element signature="e#681#682#0" expanded="true" />
+                      <element signature="e#736#737#0" expanded="true" />
+                      <element signature="e#4345#4346#0" expanded="true" />
+                      <element signature="e#4384#4385#0" expanded="true" />
+                      <element signature="e#5063#5064#0" expanded="true" />
+                      <element signature="e#5106#5107#0" expanded="true" />
+                      <element signature="e#5171#5172#0" expanded="true" />
+                      <element signature="e#5215#5216#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="94">
-              <caret line="54" column="42" lean-forward="true" selection-start-line="54" selection-start-column="42" selection-end-line="54" selection-end-column="42" />
+            <state relative-caret-position="411">
+              <caret line="46" column="52" selection-start-line="46" selection-start-column="52" selection-end-line="46" selection-end-column="52" />
               <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#645#646#0" expanded="true" />
-                <element signature="e#735#736#0" expanded="true" />
+                <element signature="e#736#737#0" expanded="true" />
                 <element signature="e#1413#1414#0" expanded="true" />
                 <element signature="e#1462#1463#0" expanded="true" />
-                <element signature="e#3146#3147#0" expanded="true" />
-                <element signature="e#3448#3449#0" expanded="true" />
-                <element signature="e#3557#3558#0" expanded="true" />
+                <element signature="e#4823#4824#0" expanded="true" />
+                <element signature="e#5545#5546#0" expanded="true" />
+                <element signature="e#5654#5655#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="jrt:///usr/lib/jvm/java-11-openjdk-amd64!/java.base/java/util/TreeMap.class">
+        <entry file="file://$PROJECT_DIR$/src/test/java/minidb/btree/BTreeTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="22">
-              <caret line="279" column="17" selection-start-line="279" selection-start-column="13" selection-end-line="279" selection-end-column="17" />
+            <state relative-caret-position="396">
+              <caret line="18" column="42" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -76,6 +103,7 @@
         <option value="$PROJECT_DIR$/src/main/java/minidb/btree/LeafNode.java" />
         <option value="$PROJECT_DIR$/src/test/java/minidb/btree/TestLeafNode.java" />
         <option value="$PROJECT_DIR$/src/main/java/minidb/btree/InternalNode.java" />
+        <option value="$PROJECT_DIR$/src/test/java/minidb/btree/BTreeTest.java" />
         <option value="$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java" />
       </list>
     </option>
@@ -161,7 +189,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="android.sdk.path" value="$USER_HOME$/Android/Sdk" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1593396913136" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1593482376607" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="C:/Program Files/nodejs/node" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
@@ -189,7 +217,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="JUnit.TestLeafNode.split">
+  <component name="RunManager" selected="JUnit.BTreeTest.testSet">
     <configuration default="true" type="Applet">
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
       <method v="2">
@@ -198,6 +226,39 @@
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BTreeTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="com.zhongyang.minidb" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="minidb.btree.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="minidb.btree" />
+      <option name="MAIN_CLASS_NAME" value="minidb.btree.BTreeTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BTreeTest.testSet" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="com.zhongyang.minidb" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="minidb.btree.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="minidb.btree" />
+      <option name="MAIN_CLASS_NAME" value="minidb.btree.BTreeTest" />
+      <option name="METHOD_NAME" value="testSet" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -279,6 +340,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.BTreeTest.testSet" />
+        <item itemvalue="JUnit.BTreeTest" />
         <item itemvalue="JUnit.TestLeafNode.split" />
         <item itemvalue="JUnit.TestLeafNode" />
       </list>
@@ -298,7 +361,7 @@
       <workItem from="1592169491911" duration="2601000" />
       <workItem from="1592175439968" duration="3342000" />
       <workItem from="1592261301697" duration="70000" />
-      <workItem from="1593389574474" duration="6876000" />
+      <workItem from="1593389574474" duration="15528000" />
     </task>
     <task id="LOCAL-00001" summary="Add LeafNode and InternalNode">
       <created>1592084711345</created>
@@ -314,49 +377,62 @@
       <option name="project" value="LOCAL" />
       <updated>1592179734785</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Use a different approaches.">
+      <created>1593396927201</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1593396927201</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Use a different approaches.">
+      <created>1593482030605</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1593482030605</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="TestLeafNode_setValue - 2020.06.14 at 18h 19m 33s.xml">
-      <configuration name="TestLeafNode.setValue" configurationId="JUnit" />
+    <history-entry file="BTreeTest - 2020.06.29 at 21h 05m 52s.xml">
+      <configuration name="BTreeTest" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode - 2020.06.14 at 18h 19m 40s.xml">
-      <configuration name="TestLeafNode" configurationId="JUnit" />
+    <history-entry file="BTreeTest - 2020.06.29 at 21h 09m 57s.xml">
+      <configuration name="BTreeTest" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_setValue - 2020.06.14 at 18h 20m 10s.xml">
-      <configuration name="TestLeafNode.setValue" configurationId="JUnit" />
+    <history-entry file="BTreeTest - 2020.06.29 at 21h 12m 34s.xml">
+      <configuration name="BTreeTest" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 03m 00s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 17m 00s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 04m 39s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 24m 45s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 05m 52s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 47m 24s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 06m 12s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 48m 08s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 06m 41s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 55m 00s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 08m 16s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 55m 32s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
-    <history-entry file="TestLeafNode_split - 2020.06.14 at 20h 08m 29s.xml">
-      <configuration name="TestLeafNode.split" configurationId="JUnit" />
+    <history-entry file="BTreeTest_testSet - 2020.06.29 at 21h 55m 45s.xml">
+      <configuration name="BTreeTest.testSet" configurationId="JUnit" />
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="16011000" />
+    <option name="totallyTimeSpent" value="24663000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1080" y="372" width="1920" height="1116" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.184375" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.184375" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Image Layers" order="3" />
@@ -365,8 +441,8 @@
       <window_info id="UI Designer" order="6" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32968128" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.26050884" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.46792036" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.3426295" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.47310758" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -376,7 +452,7 @@
       <window_info anchor="bottom" id="Database Changes" order="10" />
       <window_info anchor="bottom" id="Version Control" order="11" weight="0.32964602" />
       <window_info anchor="bottom" id="Flutter Performance" order="12" side_tool="true" />
-      <window_info anchor="bottom" id="Messages" order="13" weight="0.32964602" />
+      <window_info anchor="bottom" id="Messages" order="13" weight="0.32868525" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -439,7 +515,25 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add LeafNode and InternalNode" />
     <MESSAGE value="Add Split function for LeafNode" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Split function for LeafNode" />
+    <MESSAGE value="Use a different approaches." />
+    <option name="LAST_COMMIT_MESSAGE" value="Use a different approaches." />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java</url>
+          <line>148</line>
+          <properties />
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="JUnit">
+        <watch expression="BTree.less(entry.key, this.entries[i].key" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="jrt:///usr/lib/jvm/java-11-openjdk-amd64!/java.base/java/util/Arrays.class">
@@ -516,19 +610,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java">
+    <entry file="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.6.2/junit-platform-commons-1.6.2.jar!/org/junit/platform/commons/util/ReflectionUtils.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="94">
-          <caret line="54" column="42" lean-forward="true" selection-start-line="54" selection-start-column="42" selection-end-line="54" selection-end-column="42" />
+        <state relative-caret-position="169">
+          <caret line="364" selection-start-line="364" selection-end-line="364" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/test/java/minidb/btree/BTreeTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="396">
+          <caret line="18" column="42" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#645#646#0" expanded="true" />
-            <element signature="e#735#736#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/minidb/btree/BTree.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="411">
+          <caret line="46" column="52" selection-start-line="46" selection-start-column="52" selection-end-line="46" selection-end-column="52" />
+          <folding>
+            <element signature="e#736#737#0" expanded="true" />
             <element signature="e#1413#1414#0" expanded="true" />
             <element signature="e#1462#1463#0" expanded="true" />
-            <element signature="e#3146#3147#0" expanded="true" />
-            <element signature="e#3448#3449#0" expanded="true" />
-            <element signature="e#3557#3558#0" expanded="true" />
+            <element signature="e#4823#4824#0" expanded="true" />
+            <element signature="e#5545#5546#0" expanded="true" />
+            <element signature="e#5654#5655#0" expanded="true" />
           </folding>
         </state>
       </provider>

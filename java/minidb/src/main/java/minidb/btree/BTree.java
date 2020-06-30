@@ -44,7 +44,7 @@ public class BTree<K extends Comparable<K>, V> {
                     }
                 }
             }
-            return null;
+            return this.children[this.num].get(key);
         }
 
         public Node set(Entry entry) {

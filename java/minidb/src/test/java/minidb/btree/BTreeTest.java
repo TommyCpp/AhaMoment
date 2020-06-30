@@ -1,5 +1,6 @@
 package minidb.btree;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -14,6 +15,8 @@ public class BTreeTest {
         for (int i = 0; i < 10; i++) {
             btree.set(i, i);
         }
+
+        Assertions.assertEquals(9, btree.get(9));
 
     }
 }
