@@ -12,11 +12,21 @@ public class BTreeTest {
     public void testSet() {
         BTree<Integer, Integer> btree = new BTree<>();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i += 2) {
             btree.set(i, i);
         }
 
-        Assertions.assertEquals(9, btree.get(9));
+        for (int i = 1; i < 10; i += 2) {
+            btree.set(i, i);
+        }
+
+
+        for (int i = 0; i < 10; i++) {
+            Assertions.assertEquals(i, btree.get(i));
+        }
+
+        btree.set(5, 50);
+        Assertions.assertEquals(50, btree.get(5));
 
     }
 }
