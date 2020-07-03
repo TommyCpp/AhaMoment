@@ -29,4 +29,17 @@ public class BTreeTest {
         Assertions.assertEquals(50, btree.get(5));
 
     }
+
+    @Test
+    public void testDelete() {
+        BTree<Integer, Integer> btree = new BTree<>();
+        for (int i = 1; i <= 10; i++) {
+            btree.set(i, i);
+        }
+
+        btree.delete(9);
+        btree.delete(7);
+        btree.delete(6);
+        btree.delete(5);
+    }
 }
