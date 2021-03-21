@@ -1,0 +1,78 @@
+<mxfile host="app.diagrams.net" modified="2021-01-25T03:31:07.257Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36" etag="z4V8waKM0VEnW3knmC1R" version="14.2.7" type="github">
+  <diagram name="Page-1" id="74e2e168-ea6b-b213-b513-2b3c1d86103e">
+    <mxGraphModel dx="1248" dy="712" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-1" target="1CBbdJtJ_ePag9_BiZ48-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-1" target="1CBbdJtJ_ePag9_BiZ48-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-1" value="Runtime" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="390" y="10" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-2" target="1CBbdJtJ_ePag9_BiZ48-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-7" value="Call Shutdown to close worker task&amp;nbsp;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1CBbdJtJ_ePag9_BiZ48-6">
+          <mxGeometry x="-0.3323" y="3" relative="1" as="geometry">
+            <mxPoint x="43" y="-7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-2" value="TracerProvider" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="390" y="240" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-4" value="worker task in a blocking thread" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="780" y="240" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-8" value="But Runtime will try&lt;br&gt;to drop blocking thread first. Thus, blocking forever" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="290" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-11" target="1CBbdJtJ_ePag9_BiZ48-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-11" target="1CBbdJtJ_ePag9_BiZ48-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-11" value="Runtime" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="390" y="390" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-14" target="1CBbdJtJ_ePag9_BiZ48-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-13" value="Call Shutdown to close worker task&amp;nbsp;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1CBbdJtJ_ePag9_BiZ48-12">
+          <mxGeometry x="-0.3323" y="3" relative="1" as="geometry">
+            <mxPoint x="43" y="-7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-14" target="1CBbdJtJ_ePag9_BiZ48-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-14" value="TracerProvider" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="390" y="570" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-15" value="worker task in a blocking thread" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="780" y="570" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="1CBbdJtJ_ePag9_BiZ48-17" target="1CBbdJtJ_ePag9_BiZ48-14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="800" />
+              <mxPoint x="210" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-20" value="Guard will drop before runtime as runtime was created first&amp;nbsp;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1CBbdJtJ_ePag9_BiZ48-19">
+          <mxGeometry x="0.0778" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1CBbdJtJ_ePag9_BiZ48-17" value="TracerProvider&lt;br&gt;Guard" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="390" y="750" width="100" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
