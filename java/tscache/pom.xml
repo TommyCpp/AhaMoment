@@ -36,6 +36,11 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+            <version>4.0.3</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -45,7 +50,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.5.0</version>
                 <configuration>
-                    <mainClass>io.vertx.ahamoment.tscache.BackendVerticle</mainClass>
+                    <mainClass>io.vertx.ahamoment.hermes.publisher.Publisher</mainClass>
                 </configuration>
             </plugin>
         </plugins>

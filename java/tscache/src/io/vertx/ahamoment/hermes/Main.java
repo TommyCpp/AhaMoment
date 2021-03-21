@@ -1,5 +1,6 @@
-package io.vertx.ahamoment.tscache;
+package io.vertx.ahamoment.hermes;
 
+import io.vertx.ahamoment.hermes.publisher.Publisher;
 import io.vertx.core.Vertx;
 
 /**
@@ -8,8 +9,7 @@ import io.vertx.core.Vertx;
 public class Main {
     public static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
-        vertx.deployVerticle(new FrontEndVerticle());
-        vertx.deployVerticle(new BackendVerticle());
+        vertx.deployVerticle(new Publisher());
 
     }
 }

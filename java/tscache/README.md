@@ -1,2 +1,2 @@
-# Time series cache
-Experimental project for vertx/actor model. It should cache the most recent data points from time series from prometheus.
+# Notification publisher
+Idea of this project is from [Streaming a Million Likes/Second: Real-Time Interactions on Live Video](https://www.youtube.com/watch?v=yqc3PPmHvrA&ab_channel=InfoQ). Linkedin used Akka to build a bidirectional notification publisher.
