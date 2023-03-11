@@ -1,6 +1,6 @@
-#include "Job.h"
+#include "job.h"
 
-Job::Job(int jobId, int jobExecutionTime) {
+Job::Job(int jobId, long long jobExecutionTime) {
     id = jobId;
     executionTime = jobExecutionTime;
 }
@@ -11,9 +11,11 @@ bool Job::operator<(const Job& other) const {
 
 long long Job::getDelay() const {
     auto now = std::chrono::system_clock::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(getExecutionTime() - now.time_since_epoch()).count();
+    // return ms of delay between now and executionTime
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    return executionTime - ms;
 }
 
-std::chrono::system_clock::time_point Job::getExecutionTime() const {
-    return std::chrono::system_clock::time_point(std::chrono::milliseconds(executionTime));
+bool Job::operator==(const Job &other) const {
+    return id == other.id;
 }
