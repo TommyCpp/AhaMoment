@@ -14,4 +14,7 @@ public:
     void put(Job job);
 
     Job take();
+
+    void deleteJob(int id);
+
 };

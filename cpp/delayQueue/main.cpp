@@ -8,7 +8,7 @@ void processJob(Worker& worker) {
     while (true) {
         Job job = worker.take();
         // process job here
-        std::cout << "Processing job " << job.id << " Delay: " << job.getDelay() << "ms" << std::endl;
+        std::cout << "Processing job " << job.id << " Lag: " << job.getDelay() << "ms" << std::endl;
     }
 }
 

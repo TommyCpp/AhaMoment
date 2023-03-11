@@ -32,3 +32,17 @@ Job Worker::take() {
 
     return job;
 }
+
+void Worker::deleteJob(int id) {
+    std::unique_lock<std::mutex> lock(mtx);
+    // delete job with id from queue
+    std::priority_queue<Job> temp;
+    while (!jobs.empty()) {
+        Job job = jobs.top();
+        jobs.pop();
+        if (job.id != id) {
+            temp.push(job);
+        }
+    }
+    jobs = temp;
+}
