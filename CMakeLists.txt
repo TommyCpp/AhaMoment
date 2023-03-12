@@ -7,8 +7,8 @@ SET(CMAKE_CXX_FLAGS -pthread)
 include_directories(cpp/delayQueue)
 
 add_executable(AhaMoment
-        cpp/delayQueue/job.cpp
-        cpp/delayQueue/job.h
+        cpp/delayQueue/Job.cpp
+        cpp/delayQueue/Job.h
         cpp/delayQueue/main.cpp
-        cpp/delayQueue/worker.cpp
-        cpp/delayQueue/worker.h cpp/delayQueue/Timer.cpp cpp/delayQueue/Timer.h)
+        cpp/delayQueue/Worker.cpp
+        cpp/delayQueue/Worker.h cpp/delayQueue/Timer.cpp cpp/delayQueue/Timer.h)

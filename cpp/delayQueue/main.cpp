@@ -1,7 +1,7 @@
 #include <iostream>
 #include <thread>
-#include "worker.h"
-#include "job.h"
+#include "Worker.h"
+#include "Job.h"
 #include "Timer.h"
 
 void print(int x, const std::string& str) {

@@ -4,7 +4,7 @@
 
 #include <thread>
 #include "Timer.h"
-#include "worker.h"
+#include "Worker.h"
 
 template <typename... Args>
 Job<Args...> Timer<Args...>::generateJob(std::function<void(Args...)> jobFunc, std::tuple<Args...> jobArgs) {
