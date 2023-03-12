@@ -10,7 +10,7 @@
 template<typename T>
 class comparator_builder {
 public:
-    using Field = std::variant<int T::*, double T::*, std::string (T::*)() const>;
+    using Field = std::variant<int T::*, double T::*, std::string (T::*)() const, double (T::*)() const>;
 
     // Define a member function for specifying a field or method to compare
     comparator_builder<T> &by(Field f) {
@@ -22,25 +22,50 @@ public:
     std::function<bool(const T &, const T &)> operator()() {
         return [fields = fields_](const T &a1, const T &a2) -> bool {
             for (const auto &f: fields) {
-                struct visitor {
+                struct equaller {
                     const T &a;
+                    const T &b;
 
                     bool operator()(int T::* field) const {
-                        return a.*field > b.*field;
+                        return a.*field == b.*field;
                     }
 
                     bool operator()(double T::* field) const {
-                        return a.*field > b.*field;
+                        return a.*field == b.*field;
                     }
 
                     bool operator()(std::string (T::*method)() const) const {
-                        return (a.*method)() > (b.*method)();
+                        return (a.*method)() == (b.*method)();
                     }
 
-                    const T &b;
-                } v{a1, a2};
-                if (std::visit(v, f)) {
-                    return true;
+                    bool operator()(double (T::*method)() const) const {
+                        return (a.*method)() == (b.*method)();
+                    }
+                } e{a1, a2};
+                if (std::visit(e, f)) {
+                    continue;
+                } else {
+                    struct larger {
+                        const T &a;
+                        const T &b;
+
+                        bool operator()(int T::* field) const {
+                            return a.*field > b.*field;
+                        }
+
+                        bool operator()(double T::* field) const {
+                            return a.*field > b.*field;
+                        }
+
+                        bool operator()(std::string (T::*method)() const) const {
+                            return (a.*method)() > (b.*method)();
+                        }
+
+                        bool operator()(double (T::*method)() const) const {
+                            return (a.*method)() > (b.*method)();
+                        }
+                    } l{a1, a2};
+                    return std::visit(l, f);
                 }
             }
             return false;
@@ -57,7 +82,7 @@ public:
 
     MyStruct(int x1, double x2, const std::string &x3) : x1(x1), x2(x2), x3(x3) {}
 
-    int get_x2() const { return x2; }
+    double get_x2() const { return x2; }
 
     std::string get_x3() const { return x3; }
 
@@ -76,7 +101,7 @@ int main() {
 
     std::sort(v.begin(), v.end(), comparator_builder<MyStruct>()
             .by(&MyStruct::x1)
-            .by(&MyStruct::get_x3)());
+            .by(&MyStruct::get_x2)());
 
     for (MyStruct ms: v) {
         std::cout << ms.x1 << " " << ms.get_x2() << " " << ms.get_x3() << std::endl;
