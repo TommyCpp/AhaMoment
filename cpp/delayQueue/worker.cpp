@@ -1,6 +1,7 @@
 #include "worker.h"
 
-void Worker::put(Job job) {
+template <typename... Args>
+void Worker<Args...>::put(Job<Args...> job) {
     std::unique_lock<std::mutex> lock(mtx);
     jobs.push(job);
 
@@ -9,7 +10,8 @@ void Worker::put(Job job) {
     }
 }
 
-Job Worker::take() {
+template <typename... Args>
+Job<Args...> Worker<Args...>::take() {
     std::unique_lock<std::mutex> lock(mtx);
 
     while (jobs.empty()) {
@@ -33,10 +35,11 @@ Job Worker::take() {
     return job;
 }
 
-void Worker::deleteJob(int id) {
+template <typename... Args>
+void Worker<Args...>::deleteJob(int id) {
     std::unique_lock<std::mutex> lock(mtx);
     // delete job with id from queue
-    std::priority_queue<Job> temp;
+    std::priority_queue<Job<Args...>> temp;
     while (!jobs.empty()) {
         Job job = jobs.top();
         jobs.pop();
@@ -46,3 +49,5 @@ void Worker::deleteJob(int id) {
     }
     jobs = temp;
 }
+
+template class Worker<int, std::string>;
